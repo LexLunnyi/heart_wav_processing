@@ -40,6 +40,32 @@ bool TWavReader::init(string & wavPath, string & error) {
     string res = "";
     headerToString(res);
     printf("%s", res.c_str());
+    
+    //Read data;
+    uint16_t sample = 0;
+    //uint16_t first = 0;
+    unsigned int index = 0;
+    unsigned int readCount = header.subchunkDataSize;
+    
+    while (readCount > 0) {
+    
+        ret = read(fd, &sample, header.blockAlign);
+        if (ret <= 0) {
+            error = "Error read file";
+            return false;
+        }
+        index++;
+        
+        //first = sample & 0x00FF;
+        //sample = (sample >> 8) | (first << 8);
+        
+        sample += 32768;
+        
+        printf("%u; %u\n", index, sample);
+        
+        readCount -= header.blockAlign;
+    }
+    
     return true;
 }
 
@@ -48,19 +74,28 @@ bool TWavReader::init(string & wavPath, string & error) {
 
 void TWavReader::headerToString(string & output) {
     output = "HEADER OF FILE " + filePath + ":\n";
-    output += "    chunkId          -> "; output.append(header.chunkId, 4); output += "\n";  
-    output += "    chunkSize        -> " + to_string(header.chunkSize) + "\n";
-    output += "    format           -> "; output.append(header.format, 4); output += "\n";
-    output += "    subchunkFmtId    -> "; output.append(header.subchunkFmtId, 4); output += "\n";
-    output += "    subchunkFmtSize  -> " + to_string(header.subchunkFmtSize) + "\n";
-    output += "    audioFormat      -> " + to_string(header.audioFormat) + "\n";
-    output += "    numChannels      -> " + to_string(header.numChannels) + "\n";
-    output += "    sampleRate       -> " + to_string(header.sampleRate) + "\n";
-    output += "    byteRate         -> " + to_string(header.byteRate) + "\n";
-    output += "    blockAlign       -> " + to_string(header.blockAlign) + "\n";
-    output += "    bitsPerSample    -> " + to_string(header.bitsPerSample) + "\n";
-    output += "    subchunkDataId   -> "; output.append(header.subchunkDataId, 4); output += "\n";
-    output += "    subchunkDataSize -> " + to_string(header.subchunkDataSize) + "\n";
+    output += "    chunkId           -> "; output.append(header.chunkId, 4); output += "\n";  
+    output += "    chunkSize         -> " + to_string(header.chunkSize) + "\n";
+    output += "    format            -> "; output.append(header.format, 4); output += "\n";
+    output += "    subchunkFmtId     -> "; output.append(header.subchunkFmtId, 4); output += "\n";
+    output += "    subchunkFmtSize   -> " + to_string(header.subchunkFmtSize) + "\n";
+    output += "    audioFormat       -> " + to_string(header.audioFormat) + "\n";
+    output += "    numChannels       -> " + to_string(header.numChannels) + "\n";
+    output += "    sampleRate        -> " + to_string(header.sampleRate) + "\n";
+    output += "    byteRate          -> " + to_string(header.byteRate) + "\n";
+    output += "    blockAlign        -> " + to_string(header.blockAlign) + "\n";
+    output += "    bitsPerSample     -> " + to_string(header.bitsPerSample) + "\n";
+    output += "    subchunkFactId    -> "; output.append(header.subchunkFactId, 4); output += "\n";
+    output += "    subchunkFactSize  -> " + to_string(header.subchunkFactSize) + "\n";
+    output += "    samplesPerChannel -> " + to_string(header.samplesPerChannel) + "\n";
+    output += "    subchunkDataId    -> "; output.append(header.subchunkDataId, 4); output += "\n";
+    output += "    subchunkDataSize  -> " + to_string(header.subchunkDataSize) + "\n";
     output += "\n";
 }
 
+
+
+
+void TWavReader::readData() {
+    
+}

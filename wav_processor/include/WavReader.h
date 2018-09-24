@@ -37,10 +37,16 @@ struct TWavHeader {
     unsigned short blockAlign;
     //Ыound depth. 8 bit, 16 бbit and etc.
     unsigned short bitsPerSample;
-    //"fmt " chars in big-endian (0x64617461)
+    //"fact " chars
+    char subchunkFactId[4];
+    //Remaining size of fact field
+    unsigned int subchunkFactSize;
+    //Samples per channel
+    unsigned int samplesPerChannel;
+    //"data " chars in big-endian (0x64617461)
     char subchunkDataId[4];
     //Remaining size of data field (numSamples * numChannels * bitsPerSample/8)
-    unsigned int subchunkDataSize;    
+    unsigned int subchunkDataSize;
 };
 
 
@@ -55,6 +61,7 @@ private:
     char buffer[BUFFER_SIZE];
     
     void headerToString(string & output);
+    void readData();
 public:
     TWavReader();
     virtual ~TWavReader();
