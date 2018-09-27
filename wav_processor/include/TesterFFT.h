@@ -3,6 +3,12 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <complex>
+
+#include "FastFourierTransformer.h"
+
+
+using namespace std;
 
 class TesterFFT {
 private:
@@ -10,19 +16,24 @@ private:
     static const unsigned int MAX_FREQUENCIES = 5;
     
     static const unsigned int SAMPLE_RATE = 11025;
-    static const unsigned int SAMPLES_SIZE = 1024*10;
+    static const unsigned int SAMPLES_SIZE = 16384;
     
     static const double SOURCE_FREQUENCIES(int index) {
-        static const double res[] = {10.0, 50.0, 100.0, 500.0, 1000.0};
+        static const double res[] = {10.0, 20.0, 30.0, 40.0, 50.0};
         //static const double res[] = {1.0, 1.0, 1.0, 1.0, 1.0};
         return res[index];
     }
     
-    static const double QUANTUM() {
+    static const double TIME_RESOLUTION() {
         return 1.0 / ((double)SAMPLE_RATE);
     }
     
-    unsigned int timeData[SAMPLES_SIZE];
+    static const double FREQ_RESOLUTION() {
+        return (double)SAMPLE_RATE / ((double)SAMPLES_SIZE);
+    }
+    
+    complex<double> timeData[SAMPLES_SIZE];
+    complex<double> freqData[SAMPLES_SIZE];
     unsigned int calcSample(unsigned int index);
 public:
     TesterFFT();
