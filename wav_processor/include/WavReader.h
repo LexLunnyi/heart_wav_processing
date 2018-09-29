@@ -8,7 +8,10 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <complex.h>
 
+
+#include "FastFourierTransformer.h"
 
 
 using namespace std;
@@ -56,17 +59,24 @@ private:
     TWavHeader header;
     
     string filePath;
-    //Buffer
-    static const unsigned int BUFFER_SIZE = 1024;
-    char buffer[BUFFER_SIZE];
     
+    static const unsigned int READ_SAMPLE_COUNT = 4096;
+    static const unsigned int POSITION_START = 0;
+
     void headerToString(string & output);
     void readData();
+    
+    //vars for FFT
+    static const bool needFFT = true;
+    complex<double> timeData[READ_SAMPLE_COUNT];
+    complex<double> freqData[READ_SAMPLE_COUNT];
+    unsigned int timeDataIndex = 0;
 public:
     TWavReader();
     virtual ~TWavReader();
     
     bool init(string & wavPath, string & error);
+    bool processFFT(uint16_t sample);
 };
 
 

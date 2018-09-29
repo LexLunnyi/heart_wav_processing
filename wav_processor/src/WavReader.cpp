@@ -14,6 +14,7 @@
 #include "WavReader.h"
 
 TWavReader::TWavReader() {
+    timeDataIndex = 0;
 }
 
 
@@ -59,9 +60,15 @@ bool TWavReader::init(string & wavPath, string & error) {
         //first = sample & 0x00FF;
         //sample = (sample >> 8) | (first << 8);
         
-        sample += 32768;
+        if (2 == header.blockAlign) sample += 32768;
         
-        printf("%u; %u\n", index, sample);
+        if (needFFT) {
+            if (index >= POSITION_START) {
+                if (!processFFT(sample)) break;
+            }
+        }
+        
+        //printf("%u; %u\n", index, sample);
         
         readCount -= header.blockAlign;
     }
@@ -99,3 +106,38 @@ void TWavReader::headerToString(string & output) {
 void TWavReader::readData() {
     
 }
+
+
+
+
+
+bool TWavReader::processFFT(uint16_t sample) {
+    timeData[timeDataIndex] = complex<double>(0., 0.);
+    timeData[timeDataIndex] += sample;
+    freqData[timeDataIndex] = timeData[timeDataIndex];
+    timeDataIndex++;
+    if (READ_SAMPLE_COUNT == timeDataIndex) {
+        //If all frame was read
+        FastFourierTransformer fft;
+        fft.fft2(freqData, READ_SAMPLE_COUNT);
+        timeDataIndex = 0;
+
+        double curTime = 0.0;
+        double curFreq = 0.0;
+        
+        double timeResolution = 1.0 / (double)header.sampleRate;
+        double freqResolution = (double)header.sampleRate / (double)READ_SAMPLE_COUNT;
+        
+        for (unsigned int index = 0; index < READ_SAMPLE_COUNT; index++) {
+            curTime = index * timeResolution;
+            curFreq = index * freqResolution;
+
+            //index; time; timeVal; freq; freqVal
+            printf("%u;%.3f;%.3f;%.3f;%.3f\n", index, curTime, timeData[index].real(), curFreq, abs(freqData[index]));
+        }
+        return false;
+    } else {
+        return true;
+    }
+}
+

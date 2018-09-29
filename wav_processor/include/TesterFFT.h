@@ -8,6 +8,9 @@
 #include "FastFourierTransformer.h"
 
 
+//graph   250 - 2750
+//graph2  300 - 3900
+
 using namespace std;
 
 class TesterFFT {
@@ -42,4 +45,3 @@ public:
 };
 
 #endif /* TESTERFFT_H */
-
