@@ -32,7 +32,7 @@ void TesterFFT::process() {
     }
     
     FastFourierTransformer fft;
-    fft.fft2(freqData, SAMPLES_SIZE);
+    fft.forward(&freqData[0], SAMPLES_SIZE);
     
     double curTime = 0.0;
     double curFreq = 0.0;

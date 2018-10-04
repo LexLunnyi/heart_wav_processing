@@ -112,14 +112,15 @@ void TWavReader::readData() {
 
 
 bool TWavReader::processFFT(uint16_t sample) {
-    timeData[timeDataIndex] = complex<double>(0., 0.);
-    timeData[timeDataIndex] += sample;
-    freqData[timeDataIndex] = timeData[timeDataIndex];
+    //timeData[timeDataIndex] = complex();
+    timeData[timeDataIndex] += (double)sample;
+    freqData[timeDataIndex] += timeData[timeDataIndex];
     timeDataIndex++;
     if (READ_SAMPLE_COUNT == timeDataIndex) {
         //If all frame was read
         FastFourierTransformer fft;
-        fft.fft2(freqData, READ_SAMPLE_COUNT);
+        fft.forward(&freqData[0], READ_SAMPLE_COUNT);
+        
         timeDataIndex = 0;
 
         double curTime = 0.0;
@@ -128,12 +129,20 @@ bool TWavReader::processFFT(uint16_t sample) {
         double timeResolution = 1.0 / (double)header.sampleRate;
         double freqResolution = (double)header.sampleRate / (double)READ_SAMPLE_COUNT;
         
+        //Set border to 100 Hz
+        unsigned int maxFilteringIndex = round(100.0 / freqResolution);
+        
+        complex<double> newTimeData[READ_SAMPLE_COUNT];
+        for(unsigned int k = 0; k < maxFilteringIndex; k++) newTimeData[k] = freqData[k];
+        fft.inverse(&newTimeData[0], READ_SAMPLE_COUNT);
+        
         for (unsigned int index = 0; index < READ_SAMPLE_COUNT; index++) {
             curTime = index * timeResolution;
             curFreq = index * freqResolution;
 
             //index; time; timeVal; freq; freqVal
-            printf("%u;%.3f;%.3f;%.3f;%.3f\n", index, curTime, timeData[index].real(), curFreq, abs(freqData[index]));
+            //printf("%u;%.3f;%.3f;%.3f;%.3f\n", index, curTime, timeData[index].re(), curFreq, abs(freqData[index]));
+            printf("%u;%.3f;%.3f;%.3f;%.3f;%.3f;%.3f\n", index, curTime, timeData[index].real(), curFreq, abs(freqData[index]), curTime, newTimeData[index].real());
         }
         return false;
     } else {

@@ -11,8 +11,8 @@
 #include <complex.h>
 
 
-#include "FastFourierTransformer.h"
 
+#include "FastFourierTransformer.h"
 
 using namespace std;
 
@@ -60,8 +60,10 @@ private:
     
     string filePath;
     
-    static const unsigned int READ_SAMPLE_COUNT = 4096;
-    static const unsigned int POSITION_START = 0;
+    //static const unsigned int READ_SAMPLE_COUNT = 4096;
+    //static const unsigned int POSITION_START    = 0;
+    static const unsigned int READ_SAMPLE_COUNT = 1024;
+    static const unsigned int POSITION_START    = 3000;
 
     void headerToString(string & output);
     void readData();

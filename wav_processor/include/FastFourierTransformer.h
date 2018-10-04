@@ -1,26 +1,27 @@
-#ifndef FAST_FOURIER_TRANSFORMER
-#define FAST_FOURIER_TRANSFORMER
-
-//Cooley–Tukey FFT algorithm
-//https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
+#ifndef FAST_FOURIER_TRAnSFORMER
+#define FAST_FOURIER_TRAnSFORMER
 
 
 #include <complex>
 #include <math.h>
 
-
-
 using namespace std;
 
-class FastFourierTransformer {
-private:
-    void separate(complex<double>* a, int n);
-public:
-    FastFourierTransformer() {}
-    virtual ~FastFourierTransformer() {}
-    
-    void fft2(complex<double>* X, int N);
-};
 
+class FastFourierTransformer {
+public:
+    bool forward(const complex<double>* const input, complex<double>* const output, const unsigned int n);
+    bool forward(complex<double>* const data, const unsigned int n);
+
+    bool inverse(const complex<double>* const input, complex<double>* const output, const unsigned int n, const bool need_scale = true);
+    bool inverse(complex<double>* const data, const unsigned int n, const bool need_scale = true);
+
+private:
+    void rearrange(const complex<double>* const input, complex<double>* const output, const unsigned int n);
+    void rearrange(complex<double>* const data, const unsigned int n);
+
+    void perform(complex<double>* const data, const unsigned int n, const bool inverse = false);
+    void scale(complex<double>* const data, const unsigned int n);
+};
 
 #endif

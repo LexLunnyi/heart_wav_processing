@@ -19,11 +19,10 @@ private:
     static const unsigned int MAX_FREQUENCIES = 5;
     
     static const unsigned int SAMPLE_RATE = 11025;
-    static const unsigned int SAMPLES_SIZE = 16384;
+    static const unsigned int SAMPLES_SIZE = 4096;
     
     static const double SOURCE_FREQUENCIES(int index) {
         static const double res[] = {10.0, 20.0, 30.0, 40.0, 50.0};
-        //static const double res[] = {1.0, 1.0, 1.0, 1.0, 1.0};
         return res[index];
     }
     
