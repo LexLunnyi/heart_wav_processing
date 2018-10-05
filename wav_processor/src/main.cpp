@@ -19,6 +19,14 @@ int main (int argc, char* argv[]) {
         showHelp();
     }
     
+
+    WaveDisplay waveDisplay;
+    usleep(100000);
+    while (waveDisplay.running) {
+        usleep(100000);
+    }
+    
+    
     return 0;
 }
 
