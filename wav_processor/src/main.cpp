@@ -9,10 +9,11 @@ int main (int argc, char* argv[]) {
         return 0;
     }
     
+    WavData data;
     string act(argv[1]);
     if (act == "filter") {
         string path(argv[2]);
-        filter(path);
+        filter(path, data);
     } else if (act == "test") {
         test();
     } else {
@@ -20,7 +21,7 @@ int main (int argc, char* argv[]) {
     }
     
 
-    WaveDisplay waveDisplay;
+    WaveDisplay waveDisplay(&data);
     usleep(100000);
     while (waveDisplay.running) {
         usleep(100000);
@@ -33,10 +34,10 @@ int main (int argc, char* argv[]) {
 
 
 
-void filter(string & wavPath) {
+void filter(string & wavPath, WavData & data) {
     TWavReader wavReader;
     string error = "";
-    if (!wavReader.init(wavPath, error)) {
+    if (!wavReader.init(wavPath, data, error)) {
         printf("    error init TWavReader -> %s\n", error.c_str());
         return ;
     }    
@@ -58,3 +59,11 @@ void showHelp() {
     printf("    ./wav_processor filter path_to_wav/processing.wav\n");
     printf("\n");
 }
+
+
+
+
+
+// 1) Получить данные о wav в виде контекста (частота дискретизации / размер семпла / длина) и вектора с данными (временной график)
+// 2) Обработка нажатия стрелок (движение влево/вправо, зум вверх/вниз)
+// 3) Рефакторинг класса Display

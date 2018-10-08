@@ -6,8 +6,12 @@
 #include <stdlib.h> 
 #include <string.h> 
 #include <errno.h> 
-#include <X11/Xlib.h> 
+#include <X11/Xlib.h>
+#include <X11/keysym.h>
 #include <string>
+
+
+#include "WavData.h"
 
 
 using namespace std;
@@ -19,10 +23,15 @@ private:
     Display*  dispHandle;
     Window    windowHandle; 
     int       screenHandle;
+    WavData*  pData;
+    string    title;
+    
+    void showTimeDiagram();
 public:
     bool running;
+    unsigned int timeRatio;
     
-    WaveDisplay();
+    WaveDisplay(WavData* pData);
     virtual ~WaveDisplay();
     
     bool show();

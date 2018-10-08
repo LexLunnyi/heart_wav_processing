@@ -23,7 +23,7 @@ TWavReader::~TWavReader() {
 
 
 
-bool TWavReader::init(string & wavPath, string & error) {
+bool TWavReader::init(string & wavPath, WavData & data, string & error) {
     //Open WAV-file
     filePath = wavPath;
     int fd = open (wavPath.c_str(), O_RDONLY);
@@ -37,6 +37,9 @@ bool TWavReader::init(string & wavPath, string & error) {
         error = "Error read file";
         return false;
     }
+    data.align = header.blockAlign / header.numChannels;
+    data.sampleRate = header.sampleRate;
+    data.samplesCount = header.subchunkDataSize / header.blockAlign;
     //Output wav header
     string res = "";
     headerToString(res);
@@ -59,8 +62,8 @@ bool TWavReader::init(string & wavPath, string & error) {
         
         //first = sample & 0x00FF;
         //sample = (sample >> 8) | (first << 8);
-        
         if (2 == header.blockAlign) sample += 32768;
+        data.pushSample(sample);
         
         if (needFFT) {
             if (index >= POSITION_START) {
