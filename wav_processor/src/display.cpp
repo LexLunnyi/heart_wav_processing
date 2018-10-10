@@ -67,7 +67,7 @@ bool WaveDisplay::show() {
     //Set event mask
     XSelectInput(dispHandle, windowHandle, ExposureMask | KeyPressMask);
     XMapWindow(dispHandle, windowHandle);
-    
+
     return true;
 }
 
@@ -82,19 +82,20 @@ bool WaveDisplay::processEvents() {
     XNextEvent(dispHandle, &e);
     if (e.type == Expose) {
         //Repaint window
-        showTimeDiagram();
-        XFillRectangle(dispHandle, windowHandle, defGC, 50, 300, 1600, 200);
-
-        //XFillRectangle(dispHandle, windowHandle, defGC, 50, 50, 2, 450);
-        //XFillRectangle(dispHandle, windowHandle, defGC, 250, 50, 2, 450);
-        //XFillRectangle(dispHandle, windowHandle, defGC, 450, 50, 2, 450);
-        //XFillRectangle(dispHandle, windowHandle, defGC, 650, 50, 2, 450);
+        draw();
     }
     if (e.type == KeyPress) {
         KeySym ks = XLookupKeysym(&(e.xkey), 0);
         if (ks == XK_q) {
             //Make quit
             return false;
+        } else if (ks == XK_Up) {
+            if (timeRatio < 2) return true;
+            timeRatio -= 1;
+            draw();
+        } else if (ks == XK_Down) {
+            timeRatio += 1;
+            draw();
         } else {
             return true;
         }
@@ -120,32 +121,96 @@ void WaveDisplay::close() {
 
 
 
-void WaveDisplay::showTimeDiagram() {
+void WaveDisplay::showTimeDiagram(unsigned int graphWidth) {
+    setColor(DC_BLACK);
     GC defGC = DefaultGC(dispHandle, screenHandle);
-    XFillRectangle(dispHandle, windowHandle, defGC, 50, 50, 1600, 200);
+    XFillRectangle(dispHandle, windowHandle, defGC, 50, 50, graphWidth, 200);
     
-    XColor xcolour;
-    Colormap cmap= XDefaultColormap(dispHandle, screenHandle);
-    xcolour.green = 65535;
-    xcolour.blue = 65535;
-    xcolour.red = 65535;
-    xcolour.flags = DoRed | DoGreen | DoBlue;
-    XAllocColor(dispHandle, cmap, &xcolour);
-    XSetForeground(dispHandle, defGC, xcolour.pixel);
-    
+    setColor(DC_WHITE);
     unsigned int value;
     unsigned int timeIndex = 0;
     double valRatio = (double)(pData->maxValue - pData->minValue) / 200.0;
     pData->rewind();
     
+    if (!pData->popSample(&value)) return;
+    unsigned int firstX = 50 + timeIndex / timeRatio;
+    unsigned int firstY = 250 - (unsigned int)((double)(value - pData->minValue)/valRatio);
+    unsigned int secondX = 0;
+    unsigned int secondY = 0;
+    
     while (pData->popSample(&value)) {
-        unsigned int X = 50 + timeIndex / timeRatio;
-        if (X > 1650) break;
-        unsigned int Y = 250 - (unsigned int)((double)(value - pData->minValue)/valRatio);
+        secondX = 50 + timeIndex / timeRatio;
+        if (secondX > (graphWidth + 50)) break;
+        secondY = 250 - (unsigned int)((double)(value - pData->minValue)/valRatio);
 
-        XDrawPoint(dispHandle, windowHandle, defGC, X, Y);
+        XDrawLine(dispHandle, windowHandle, defGC, firstX, firstY, secondX, secondY);
+        
+        firstX = secondX;
+        firstY = secondY;
         timeIndex++;
     }
+    setColor(DC_BLACK);
+}
+
+
+
+
+void WaveDisplay::setColor(TDrawColor color) {
+    unsigned short red = 0;
+    unsigned short green = 0;
+    unsigned short blue = 0;
     
+    switch(color) {
+        case DC_RED:
+            red = 0xFFFF;
+            break;
+        case DC_GREEN:
+            green = 0xFFFF;
+            break;
+        case DC_BLUE:
+            blue = 0xFFFF;
+            break;
+        case DC_WHITE:
+            red = 0xFFFF;
+            green = 0xFFFF;
+            blue = 0xFFFF;
+            break;
+    }
+    setColor(red, green, blue);
+}
+
+
+
+
+void WaveDisplay::setColor(unsigned short red, unsigned short green, unsigned short blue) {
+    XColor xcolour;
+    xcolour.green = green;
+    xcolour.blue = blue;
+    xcolour.red = red;
+    xcolour.flags = DoRed | DoGreen | DoBlue;
+    XAllocColor(dispHandle, XDefaultColormap(dispHandle, screenHandle), &xcolour);
+    XSetForeground(dispHandle, DefaultGC(dispHandle, screenHandle), xcolour.pixel);
+}
+
+
+
+
+
+void WaveDisplay::draw() {
+    XWindowAttributes wndAttr;
+    XGetWindowAttributes(dispHandle, windowHandle, &wndAttr);
+    unsigned int graphWidth = (wndAttr.width > 100) ? wndAttr.width-100: wndAttr.width;
     
+    GC defGC = DefaultGC(dispHandle, screenHandle);
+    
+    showTimeDiagram(graphWidth);
+    XFillRectangle(dispHandle, windowHandle, defGC, 50, 300, graphWidth, 200);
+
+    /*
+    setColor(DC_GREEN);
+    XFillRectangle(dispHandle, windowHandle, defGC, 50, 50, 2, 450);
+    XFillRectangle(dispHandle, windowHandle, defGC, 450, 50, 2, 450);
+    XFillRectangle(dispHandle, windowHandle, defGC, 850, 50, 2, 450);
+    XFillRectangle(dispHandle, windowHandle, defGC, 1250, 50, 2, 450);    
+     */
 }
