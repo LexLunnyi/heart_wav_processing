@@ -13,6 +13,7 @@
 
 
 #include "FastFourierTransformer.h"
+#include "SimpleTimeFourierTransformer.h"
 #include "WavData.h"
 
 
@@ -75,6 +76,8 @@ private:
     complex<double> timeData[READ_SAMPLE_COUNT];
     complex<double> freqData[READ_SAMPLE_COUNT];
     unsigned int timeDataIndex = 0;
+    
+    SimpleTimeFourierTransformer stft;
 public:
     TWavReader();
     virtual ~TWavReader();

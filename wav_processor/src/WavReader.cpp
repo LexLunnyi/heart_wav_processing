@@ -64,6 +64,7 @@ bool TWavReader::init(string & wavPath, WavData & data, string & error) {
         //sample = (sample >> 8) | (first << 8);
         if (2 == header.blockAlign) sample += 32768;
         data.pushSample(sample);
+        data.pushSpectrum(stft.quant(sample));
         
         if (needFFT) {
             if (index >= POSITION_START) {

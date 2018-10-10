@@ -22,6 +22,7 @@ WaveDisplay::WaveDisplay(WavData* pData) {
     running = false;
     this->pData = pData;
     timeRatio = 10;
+    timeStartPosition = 0;
     
     title = "Heart WAV processor (" + 
             to_string(pData->sampleRate) + " / " + to_string(pData->align) + " / " + 
@@ -96,14 +97,23 @@ bool WaveDisplay::processEvents() {
         } else if (ks == XK_Down) {
             timeRatio += 1;
             draw();
+        } else if (ks == XK_Right) {
+            if (timeStartPosition < 500) return true;
+            timeStartPosition -= 500;
+            draw();
+        } else if (ks == XK_Left) {
+            timeStartPosition += 500;
+            draw();
+        } else if (ks == XK_r) {
+            timeRatio = 10;
+            timeStartPosition = 0;
+            draw();
+            return true;
         } else {
             return true;
         }
     }
-    
-    //printf("Event (N) -> %i", e.type);
-    
-    
+
     return true;
 }
 
@@ -130,7 +140,7 @@ void WaveDisplay::showTimeDiagram(unsigned int graphWidth) {
     unsigned int value;
     unsigned int timeIndex = 0;
     double valRatio = (double)(pData->maxValue - pData->minValue) / 200.0;
-    pData->rewind();
+    pData->rewind(timeStartPosition);
     
     if (!pData->popSample(&value)) return;
     unsigned int firstX = 50 + timeIndex / timeRatio;

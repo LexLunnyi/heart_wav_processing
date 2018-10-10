@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "SpectrumContainer.h"
 
 using namespace std;
 
@@ -22,10 +23,13 @@ public:
     virtual ~WavData();
     
     void pushSample(unsigned int value);
+    void pushSpectrum(PSpectrumContainer value);
+    
     bool popSample(unsigned int* pValue);
-    void rewind();
+    void rewind(unsigned int newPosition);
 private:
     vector<unsigned int> samples;
+    vector<PSpectrumContainer> spectrums;
     unsigned int curPosition;
 };
 

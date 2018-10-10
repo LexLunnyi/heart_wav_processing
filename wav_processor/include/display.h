@@ -39,6 +39,8 @@ private:
     WavData*  pData;
     string    title;
     
+    unsigned int timeStartPosition;
+    
     void showTimeDiagram(unsigned int graphWidth);
     void setColor(TDrawColor color);
     void setColor(unsigned short red, unsigned short green, unsigned short blue);

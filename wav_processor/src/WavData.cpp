@@ -12,6 +12,7 @@ WavData::WavData() {
 
 WavData::~WavData() {
     samples.clear();
+    spectrums.clear();
 }
 
 
@@ -28,6 +29,16 @@ void WavData::pushSample(unsigned int value) {
 }
 
 
+
+
+void WavData::pushSpectrum(PSpectrumContainer value) {
+    spectrums.pop_back(value);
+}
+
+
+
+
+
 bool WavData::popSample(unsigned int* pValue) {
     if (curPosition >= samples.size()) {
         return false;
@@ -42,6 +53,7 @@ bool WavData::popSample(unsigned int* pValue) {
 
 
 
-void WavData::rewind() {
-    curPosition = 0;
+void WavData::rewind(unsigned int newPosition) {
+    if (newPosition >= samples.size()-1) return;
+    curPosition = newPosition;
 }
