@@ -1,5 +1,3 @@
-#include <vector>
-
 #include "WavData.h"
 
 
@@ -12,6 +10,7 @@ WavData::WavData() {
 
 WavData::~WavData() {
     samples.clear();
+    for(vector<PSpectrumContainer>::iterator it = spectrums.begin(); it != spectrums.end(); it++) delete *it;
     spectrums.clear();
 }
 
@@ -31,13 +30,6 @@ void WavData::pushSample(unsigned int value) {
 
 
 
-void WavData::pushSpectrum(PSpectrumContainer value) {
-    spectrums.pop_back(value);
-}
-
-
-
-
 
 bool WavData::popSample(unsigned int* pValue) {
     if (curPosition >= samples.size()) {
@@ -48,6 +40,28 @@ bool WavData::popSample(unsigned int* pValue) {
         return true;
     }
 }
+
+
+
+
+void WavData::pushSpectrum(PSpectrumContainer value) {
+    spectrums.push_back(value);
+}
+
+
+
+
+PSpectrumContainer WavData::popSpectrum() {
+    if (curPosition >= spectrums.size()) {
+        return NULL;
+    } else {
+        PSpectrumContainer res = spectrums[curPosition];
+        curPosition++;
+        return res;
+    }
+}
+
+
 
 
 

@@ -2,6 +2,7 @@
 #define WAVDATA_H
 
 #include <vector>
+#include <stdlib.h>
 
 #include "SpectrumContainer.h"
 
@@ -26,6 +27,7 @@ public:
     void pushSpectrum(PSpectrumContainer value);
     
     bool popSample(unsigned int* pValue);
+    PSpectrumContainer popSpectrum();
     void rewind(unsigned int newPosition);
 private:
     vector<unsigned int> samples;

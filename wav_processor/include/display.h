@@ -7,6 +7,8 @@
 #include <string.h> 
 #include <errno.h> 
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xos.h>
 #include <X11/keysym.h>
 #include <string>
 
@@ -17,13 +19,7 @@
 using namespace std;
 
 
-typedef enum DrawColor {
-    DC_BLACK,
-    DC_RED,
-    DC_GREEN,
-    DC_BLUE,
-    DC_WHITE
-} TDrawColor; 
+int display_error_handler(Display * disp, XErrorEvent * err);
 
 class WaveDisplay {
 private:
@@ -31,6 +27,18 @@ private:
     static const unsigned int POS_LEFT = 50;
     static const unsigned int POS_WIDTH = 50;
     static const unsigned int POS_HEIGHT = 50;
+
+    static const unsigned int NCOLORS = 3;
+    static const unsigned int PIXEL_INDEX_GRAPH = 0;
+    
+    unsigned long colors[NCOLORS];
+    
+    XColor graphColors[255];
+    XColor redColor;
+    XColor blueColor;
+    XColor greenColor;
+    XColor whiteColor;
+    XColor blackColor;
     
     pthread_t thread;
     Display*  dispHandle;
@@ -38,13 +46,17 @@ private:
     int       screenHandle;
     WavData*  pData;
     string    title;
+    Colormap  defColorMap;
+    
+    unsigned long pixelGraph;
     
     unsigned int timeStartPosition;
     
     void showTimeDiagram(unsigned int graphWidth);
-    void setColor(TDrawColor color);
-    void setColor(unsigned short red, unsigned short green, unsigned short blue);
+    void showSpectrumDiagram(unsigned int graphWidth);
+    void setColor(XColor & color);
     void draw();
+    void createPalette();
 public:
     bool running;
     unsigned int timeRatio;
