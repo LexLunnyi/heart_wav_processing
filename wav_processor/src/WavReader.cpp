@@ -52,6 +52,7 @@ bool TWavReader::init(string & wavPath, WavData & data, string & error) {
         if (2 == header.blockAlign) sample += 32768;
         data.pushSample(sample);
         data.pushSpectrum(stft.quant(sample));
+        printf("Sample num %d\n", index);
         
         if (needFFT) {
             if (index >= POSITION_START) {

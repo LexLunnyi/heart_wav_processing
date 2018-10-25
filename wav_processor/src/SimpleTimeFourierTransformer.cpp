@@ -1,20 +1,19 @@
 #include "SimpleTimeFourierTransformer.h"
 
 SimpleTimeFourierTransformer::SimpleTimeFourierTransformer() {
-    quantsCount = 0;
 }
 
 
 SimpleTimeFourierTransformer::~SimpleTimeFourierTransformer() {
+    row.clear();
 }
 
 
 
 
 PSpectrumContainer SimpleTimeFourierTransformer::quant(unsigned int value) {
-    quantsCount++;
     row.push_back(value);
-    PSpectrumContainer res = new SpectrumContainer();
+    PSpectrumContainer res = new SpectrumContainer(STFT_WINDOW_SIZE);
     
     if (row.size() >= STFT_WINDOW_SIZE) {
         //Prepare buffer
@@ -24,6 +23,7 @@ PSpectrumContainer SimpleTimeFourierTransformer::quant(unsigned int value) {
         }
         row.pop_front();
         fft.forward(res->getData(), STFT_WINDOW_SIZE);
+        res->prepare();
     }
     
     return res;

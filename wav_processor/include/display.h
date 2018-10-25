@@ -31,6 +31,8 @@ private:
     static const unsigned int NCOLORS = 3;
     static const unsigned int PIXEL_INDEX_GRAPH = 0;
     
+    static constexpr double FILTER_BORDER_FREQ = 150.0;
+    
     unsigned long colors[NCOLORS];
     
     XColor graphColors[255];

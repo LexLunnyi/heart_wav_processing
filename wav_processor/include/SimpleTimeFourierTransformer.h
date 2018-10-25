@@ -11,15 +11,14 @@ using namespace std;
 
 class SimpleTimeFourierTransformer {
 public:
+    static const unsigned int STFT_WINDOW_SIZE = 2048;
+    
     SimpleTimeFourierTransformer();
     virtual ~SimpleTimeFourierTransformer();
     
     PSpectrumContainer quant(unsigned int value);
 private:
-    static const unsigned int STFT_WINDOW_SIZE = 1024;
     static const unsigned int STFT_WINDOW_STEP = 1;
-    
-    unsigned int quantsCount;
     
     FastFourierTransformer fft;
     

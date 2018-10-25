@@ -222,31 +222,17 @@ void WaveDisplay::draw() {
     XWindowAttributes wndAttr;
     XGetWindowAttributes(dispHandle, windowHandle, &wndAttr);
     unsigned int graphWidth = (wndAttr.width > 100) ? wndAttr.width-100: wndAttr.width;
-    
-    GC defGC = DefaultGC(dispHandle, screenHandle);
-    showTimeDiagram(graphWidth);
-    showSpectrumDiagram(graphWidth);
 
-    
-    /*
-    setColor(graphColors[50]);
-    XFillRectangle(dispHandle, windowHandle, defGC, 50, 50, 2, 450);
-    setColor(graphColors[100]);
-    XFillRectangle(dispHandle, windowHandle, defGC, 450, 50, 2, 450);
-    setColor(graphColors[150]);
-    XFillRectangle(dispHandle, windowHandle, defGC, 850, 50, 2, 450);
-    setColor(graphColors[200]);
-    XFillRectangle(dispHandle, windowHandle, defGC, 1250, 50, 2, 450);
-    */
-    
+    showTimeDiagram(graphWidth);
+    showSpectrumDiagram(graphWidth);    
 }
 
 
 
 
 void WaveDisplay::showSpectrumDiagram(unsigned int graphWidth) {
-    unsigned short values[graphWidth][200];
-    
+    unsigned short values[graphWidth][400];
+    memset(values, 0, sizeof(unsigned short)*graphWidth*200);
 
     setColor(blackColor);
     GC defGC = DefaultGC(dispHandle, screenHandle);
@@ -256,18 +242,17 @@ void WaveDisplay::showSpectrumDiagram(unsigned int graphWidth) {
     unsigned int timeIndex = 0;
     pData->rewind(timeStartPosition);
     PSpectrumContainer spectrum = pData->popSpectrum();
-    
+
     while (spectrum != NULL) {
         unsigned int X = timeIndex / timeRatio;
         if (X >= graphWidth) break;
-        
-        for (unsigned int Y = 0; Y < 200; Y++) {
-            values[X][Y] = (unsigned short)(((double)Y / 200.0)*255.0);
-            //setColor(graphColors[red]);
-            //printf("Set color %u\n", red);
-            //XDrawPoint(dispHandle, windowHandle, defGC, X, 500 - Y);
+
+        if (spectrum->getSize() > 0) {
+            for (unsigned int Y = 0; Y < 200; Y++) {
+                values[X][Y] = (unsigned char)(spectrum->getRelativeValue(Y) * 255.0);
+            }
         }
-        
+
         timeIndex++;
         spectrum = pData->popSpectrum();
     }
@@ -283,7 +268,11 @@ void WaveDisplay::showSpectrumDiagram(unsigned int graphWidth) {
         }
     }
     
-    
+    //Show green line with filter border 100 Hz
+    setColor(greenColor);
+    double freqResolution = (double)pData->sampleRate/(double)spectrum->windowSize;
+    unsigned int maxFilteringIndex = round(FILTER_BORDER_FREQ / freqResolution);
+    XDrawLine(dispHandle, windowHandle, defGC, 50, 500 - maxFilteringIndex, 50 + graphWidth , 500 - maxFilteringIndex);
     
     setColor(blackColor);
 }
