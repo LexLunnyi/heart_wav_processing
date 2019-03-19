@@ -13,6 +13,9 @@
 
 
 #include "FastFourierTransformer.h"
+#include "SimpleTimeFourierTransformer.h"
+#include "WavData.h"
+
 
 using namespace std;
 
@@ -38,7 +41,7 @@ struct TWavHeader {
     unsigned int byteRate;
     //numChannels * bitsPerSample/8
     unsigned short blockAlign;
-    //Ыound depth. 8 bit, 16 бbit and etc.
+    //Sound depth. 8 bit, 16 бbit and etc.
     unsigned short bitsPerSample;
     //"fact " chars
     char subchunkFactId[4];
@@ -69,15 +72,17 @@ private:
     void readData();
     
     //vars for FFT
-    static const bool needFFT = true;
+    static const bool needFFT = false;
     complex<double> timeData[READ_SAMPLE_COUNT];
     complex<double> freqData[READ_SAMPLE_COUNT];
     unsigned int timeDataIndex = 0;
+    
+    SimpleTimeFourierTransformer stft;
 public:
     TWavReader();
     virtual ~TWavReader();
     
-    bool init(string & wavPath, string & error);
+    bool init(string & wavPath, WavData & data, string & error);
     bool processFFT(uint16_t sample);
 };
 
@@ -85,48 +90,4 @@ public:
 
 
 
-
-
-
-
-/*
- 
- 
-   FILE *file;
-    errno_t err;
-    err = fopen_s(&file, "Slipknot - Three Nil.wav", "rb");
-    if (err)
-    {
-        printf_s("Failed open file, error %d", err);
-        return 0;
-    }
-
-    WAVHEADER header;
-
-    fread_s(&header, sizeof(WAVHEADER), sizeof(WAVHEADER), 1, file);
-
-    // Выводим полученные данные
-    printf_s("Sample rate: %d\n", header.sampleRate);
-    printf_s("Channels: %d\n", header.numChannels);
-    printf_s("Bits per sample: %d\n", header.bitsPerSample);
-
-    // Посчитаем длительность воспроизведения в секундах
-    float fDurationSeconds = 1.f * header.subchunk2Size / (header.bitsPerSample / 8) / header.numChannels / header.sampleRate;
-    int iDurationMinutes = (int)floor(fDurationSeconds) / 60;
-    fDurationSeconds = fDurationSeconds - (iDurationMinutes * 60);
-    printf_s("Duration: %02d:%02.f\n", iDurationMinutes, fDurationSeconds);
-
-    fclose(file);
-
-    _getch();
-return 0;
- 
- 
- */
-
-
-
-
-
 #endif /* WAVREADER_H */
-
