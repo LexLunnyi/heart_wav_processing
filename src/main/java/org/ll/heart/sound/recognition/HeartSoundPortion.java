@@ -17,6 +17,7 @@ public class HeartSoundPortion {
     public HeartSoundPortion(Date ts, Double in) {
         this.ts = ts;
         this.in = in;
+        this.out = 0.0;
     }
 
     public Date getTs() {
@@ -27,6 +28,10 @@ public class HeartSoundPortion {
         return in;
     }
 
+    public void setOut(Double out) {
+        this.out = out;
+    }
+    
     public Double getOut() {
         return out;
     }
