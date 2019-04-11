@@ -28,11 +28,12 @@ public class WavContainer {
     private Double freqStep = 0.0;
     FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
     
-    private final Date LIMIT_TS = new Date(500);
-    private static final int WINDOW_SIZE = 512;
-    private static final int WINDOW_STEP = 64;
+    private final Date LIMIT_TS_BEGIN = new Date(290);
+    private final Date LIMIT_TS_END = new Date(400);
+    private static final int WINDOW_SIZE = 128;
+    private static final int WINDOW_STEP = 1;
     private static final double SPECTRUM_LOW = 1.0;
-    private static final double SPECTRUM_HIGH = 11000.0;
+    private static final double SPECTRUM_HIGH = 100.0;
 
     public WavContainer(String fileName) throws IOException, Exception {
         this.fileName = fileName;
@@ -71,7 +72,10 @@ public class WavContainer {
                     minValue = buffer[s];
                 }
                 Date ts = new Date((index * 1000) / freq);
-                if (ts.compareTo(LIMIT_TS) > 0) {
+                if (ts.compareTo(LIMIT_TS_BEGIN) < 0) {
+                    continue;
+                }
+                if (ts.compareTo(LIMIT_TS_END) > 0) {
                     framesRead = 0;
                     break;
                 }
@@ -114,15 +118,24 @@ public class WavContainer {
     
     public Complex[] FourierProcessing(double[] input) {
         Complex[] res = transformer.transform(input, TransformType.FORWARD);
-        long size = res.length;
+        int size = res.length;
 
+        /*
+        for (int i = 1; i < 4; i++) {
+            res[i] = new Complex(0);
+        }
+        for (int i = 60; i < 64; i++) {
+            res[i] = new Complex(0);
+        }*/
        
-        for (int i = 0; i < size; i++) {
+        
+        for (int i = 1; i < size/2; i++) {
             double curFreq = i * freqStep;
-
+            
             if ((curFreq <= SPECTRUM_LOW) || (curFreq >= SPECTRUM_HIGH)) {
                 //Empty noise
-                res[i] = new Complex(0, 0);
+                res[i] = new Complex(0);
+                res[size-i] = new Complex(0);
             } else {
                 //Calc magnitude
             }
@@ -148,7 +161,7 @@ public class WavContainer {
             }
             Complex[] output = FourierProcessing(input);
             for(int j = 0; j < WINDOW_STEP; j++) {
-                if (output[j].getImaginary() < 0) {
+                if (output[j].getReal() < 0) {
                     data.get(index + j).setOut(output[j].abs()*(-1.0));
                 } else {
                     data.get(index + j).setOut(output[j].abs());
