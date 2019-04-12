@@ -28,10 +28,10 @@ public class WavContainer {
     private Double freqStep = 0.0;
     FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
     
-    private final Date LIMIT_TS_BEGIN = new Date(290);
-    private final Date LIMIT_TS_END = new Date(400);
-    private static final int WINDOW_SIZE = 128;
-    private static final int WINDOW_STEP = 1;
+    private final Date LIMIT_TS_BEGIN = new Date(200);
+    private final Date LIMIT_TS_END = new Date(500);
+    private static final int WINDOW_SIZE = 32;
+    private static final int WINDOW_STEP = 2;
     private static final double SPECTRUM_LOW = 1.0;
     private static final double SPECTRUM_HIGH = 100.0;
 
@@ -120,15 +120,6 @@ public class WavContainer {
         Complex[] res = transformer.transform(input, TransformType.FORWARD);
         int size = res.length;
 
-        /*
-        for (int i = 1; i < 4; i++) {
-            res[i] = new Complex(0);
-        }
-        for (int i = 60; i < 64; i++) {
-            res[i] = new Complex(0);
-        }*/
-       
-        
         for (int i = 1; i < size/2; i++) {
             double curFreq = i * freqStep;
             
@@ -151,6 +142,10 @@ public class WavContainer {
     public void makeOutput() {
         long size = data.size();
         double[] input = new double[WINDOW_SIZE];
+        int FIRST = WINDOW_SIZE/2 - WINDOW_STEP/2;
+        //System.out.print("WINDOW_SIZE: " + Integer.toString(WINDOW_SIZE) + "\n");
+        //System.out.print("WINDOW_STEP: " + Integer.toString(WINDOW_STEP) + "\n");
+        //System.out.print("FIRST: " + Integer.toString(FIRST) + "\n");
         
         for(int index = 0; index < size; index += WINDOW_STEP) {
             if (index + WINDOW_SIZE >= size) {
@@ -160,7 +155,7 @@ public class WavContainer {
                 input[j] = data.get(index + j).getIn();
             }
             Complex[] output = FourierProcessing(input);
-            for(int j = 0; j < WINDOW_STEP; j++) {
+            for(int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
                 if (output[j].getReal() < 0) {
                     data.get(index + j).setOut(output[j].abs()*(-1.0));
                 } else {
