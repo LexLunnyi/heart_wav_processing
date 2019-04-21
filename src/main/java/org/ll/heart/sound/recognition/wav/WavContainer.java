@@ -16,24 +16,36 @@ import org.ll.heart.sound.recognition.HeartSoundPortion;
 /**
  *
  * @author aberdnikov
+ * 
+ * 
+ * 1) Рефакторинг кода.
+ * 2) Нормализовать энергию окна и магнитуду сигнала.
+ * 3) Определиться с критерием завершения сигнала.
  */
 public class WavContainer {
 
     private final List<HeartSoundPortion> data = new ArrayList<>();
+    private final List<String> spectrogram = new ArrayList<>();
     
     private final String fileName;
     private final SimpleDateFormat tsFormat = new SimpleDateFormat("mm:ss.S");
     private Double maxValue = Double.MIN_VALUE;
     private Double minValue = Double.MAX_VALUE;
-    private Double freqStep = 0.0;
+    private Double freqStep = 0.0D;
+    private long sampleRate = 0;
     FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
     
-    private final Date LIMIT_TS_BEGIN = new Date(200);
-    private final Date LIMIT_TS_END = new Date(500);
-    private static final int WINDOW_SIZE = 32;
-    private static final int WINDOW_STEP = 2;
-    private static final double SPECTRUM_LOW = 1.0;
-    private static final double SPECTRUM_HIGH = 100.0;
+    //private final Date LIMIT_TS_BEGIN = new Date(200);
+    //private final Date LIMIT_TS_END = new Date(500);
+    private final Date LIMIT_TS_BEGIN = new Date(0);
+    private final Date LIMIT_TS_END = new Date(5000);
+    private static final int WINDOW_SIZE = 256;  //DOI: 10.1109/ISETC.2012.6408110
+    private static final int WINDOW_STEP = 16;   //DOI: 10.1109/ISETC.2012.6408110
+    private static final double SPECTRUM_LOW = 0.0;
+    private static final double SPECTRUM_HIGH = 300.0;
+    
+    private Double maxWindowEnergy = Double.MIN_VALUE;
+    private Double maxMagnitude = Double.MIN_VALUE;
 
     public WavContainer(String fileName) throws IOException, Exception {
         this.fileName = fileName;
@@ -51,8 +63,8 @@ public class WavContainer {
             throw new Exception("Stereo records still not supported");
         }
 
-        long freq = wavFile.getSampleRate();
-        freqStep = (double)freq / (double)WINDOW_SIZE;
+        sampleRate = wavFile.getSampleRate();
+        freqStep = (double)sampleRate / (double)WINDOW_SIZE;
 
         // Create a buffer of 100 frames
         double[] buffer = new double[WINDOW_SIZE * numChannels];
@@ -71,7 +83,7 @@ public class WavContainer {
                 if (buffer[s] < minValue) {
                     minValue = buffer[s];
                 }
-                Date ts = new Date((index * 1000) / freq);
+                Date ts = new Date((index * 1000) / sampleRate);
                 if (ts.compareTo(LIMIT_TS_BEGIN) < 0) {
                     continue;
                 }
@@ -109,31 +121,62 @@ public class WavContainer {
     public void saveCSV() throws IOException {
         try (FileWriter fileWriter = new FileWriter("output.csv")) {
             for (HeartSoundPortion heartSoundPortion : data) {
-                String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;\n", heartSoundPortion.getIn(), heartSoundPortion.getOut());
+                String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%.5f;%.5f;\n", 
+                        heartSoundPortion.getIn(), heartSoundPortion.getOut(), heartSoundPortion.getMagnitude(), heartSoundPortion.getWindowEnergy());
+                fileWriter.write(row);
+            }
+        }
+    }
+    
+    public void saveSpectrogramCSV() throws IOException {
+        try (FileWriter fileWriter = new FileWriter("spectrogram.csv")) {
+            for (String row : spectrogram) {
                 fileWriter.write(row);
             }
         }
     }
     
     
-    public Complex[] FourierProcessing(double[] input) {
+    public Complex[] FourierProcessing(HeartSoundPortion curPortion, double[] input, Complex[] prev) {
         Complex[] res = transformer.transform(input, TransformType.FORWARD);
         int size = res.length;
+        double curMagnitude = 0.0D;
+        double curPhase = 0.0D;
+        double curPhaseDiff = 0.0D;
 
+        //String row = tsFormat.format(curPortion.getTs()) + ";";
         for (int i = 1; i < size/2; i++) {
             double curFreq = i * freqStep;
             
+            //Prepare CSV-row for debugging;
+            //row += String.format("%.5f/%.2f;", res[i].abs(), (res[i].getArgument() / Math.PI)*180.0);
+            
+            //Make bandpass filtration
             if ((curFreq <= SPECTRUM_LOW) || (curFreq >= SPECTRUM_HIGH)) {
                 //Empty noise
                 res[i] = new Complex(0);
                 res[size-i] = new Complex(0);
-            } else {
-                //Calc magnitude
+            } else if (null != prev) {
+                curPhaseDiff += calcPhaseSubtraction(prev[i], res[i]);
+                double fEdge = prev[i].abs();
+                double sEdge = res[i].abs();
+                double subValue = Math.sqrt(Math.pow(fEdge, 2) + Math.pow(sEdge, 2) - 2 * fEdge * sEdge * Math.cos(curPhaseDiff * Math.PI));
+                curMagnitude += Math.pow(subValue, 2);
+                if (0.0D == curPhase) {
+                    curPhase = calcPhase(res[i]);
+                }
+                
             }
+            //Prepare CSV-row for debugging;
+            //row += String.format("%.5f;", res[i].abs());
         }
-      
-        
-        return transformer.transform(res, TransformType.INVERSE);
+        //row += "\n";
+        //spectrogram.add(row);
+        curPortion.setMagnitude(Math.sqrt(curMagnitude));
+        curPortion.setPhase(curPhase);
+        curPortion.setPhaseDiff(Math.sqrt(curPhaseDiff));
+         
+        return res;
     }
     
     
@@ -143,25 +186,103 @@ public class WavContainer {
         long size = data.size();
         double[] input = new double[WINDOW_SIZE];
         int FIRST = WINDOW_SIZE/2 - WINDOW_STEP/2;
-        //System.out.print("WINDOW_SIZE: " + Integer.toString(WINDOW_SIZE) + "\n");
-        //System.out.print("WINDOW_STEP: " + Integer.toString(WINDOW_STEP) + "\n");
-        //System.out.print("FIRST: " + Integer.toString(FIRST) + "\n");
+        
+        Complex[] output = null;  
+        Complex[] fftData = null;
+        double phase = 0.0D;
+        double windowEnergy = 0.0D;
+        double magnitude = 0.0D;
+        double diffPhase = 0.0D;
         
         for(int index = 0; index < size; index += WINDOW_STEP) {
+            System.out.print("index: " + Integer.toString(index) + "\n");
             if (index + WINDOW_SIZE >= size) {
                 break;
             }
             for(int j = 0; j < WINDOW_SIZE; j++) {
                 input[j] = data.get(index + j).getIn();
             }
-            Complex[] output = FourierProcessing(input);
+            
+            HeartSoundPortion curPortion = data.get(index + FIRST);
+            fftData = FourierProcessing(curPortion, input, fftData);
+            
+            magnitude = curPortion.getMagnitude();
+            phase = curPortion.getPhase();
+            diffPhase = curPortion.getPhaseDiff();
+            windowEnergy = 0;
+            
+            output = transformer.transform(fftData, TransformType.INVERSE);
             for(int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
+                HeartSoundPortion cur = data.get(index + j);
                 if (output[j].getReal() < 0) {
-                    data.get(index + j).setOut(output[j].abs()*(-1.0));
+                    cur.setOut(output[j].abs()*(-1.0));
                 } else {
-                    data.get(index + j).setOut(output[j].abs());
+                    cur.setOut(output[j].abs());
                 }
+                windowEnergy += Math.pow(cur.getOut(), 2);
             }
+            
+            //Set subband parameters
+            for(int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
+                HeartSoundPortion cur = data.get(index + j);
+                cur.setWindowEnergy(windowEnergy);
+                cur.setMagnitude(magnitude);
+                cur.setPhase(phase);
+                cur.setPhaseDiff(diffPhase);
+            }
+            updateExtremums(curPortion);
+        }
+        normalize();
+    }
+    
+    
+    double getMagnitudeSubtraction(Complex prev, Complex cur) {
+        //double real = prev.getReal() - cur.getReal();
+        //double img = prev.getImaginary() - cur.getImaginary();
+        //return Math.sqrt(real*real + img*img)*10.0;
+        double prevAbs = prev.abs();
+        double curAbs = cur.abs();
+        return Math.sqrt(Math.pow(prevAbs, 2) + Math.pow(curAbs, 2));
+    }
+    
+    
+    
+    double calcPhase(Complex cur) {
+        double arg = (Math.atan2(cur.getImaginary(), cur.getReal()) / Math.PI)*180.0;
+        if (cur.getImaginary() < 0) {
+            arg += 360.0;
+        }
+        return arg/360.0;
+    }
+    
+    
+    double calcPhaseSubtraction(Complex prev, Complex cur) {
+        //Complex diff = new Complex(cur.getReal() - prev.getReal(), cur.getImaginary() - prev.getImaginary());
+        //return calcPhase(diff);
+        double res = calcPhase(cur) - calcPhase(prev);
+        if (res < -0.5) {
+            res += 1.0;
+        } else if (res > 0.5) {
+            res -= 1.0;
+        }
+        return res;
+    }
+    
+    
+    void updateExtremums(HeartSoundPortion curPortions) {
+        if (curPortions.getMagnitude() > maxMagnitude) {
+            maxMagnitude = curPortions.getMagnitude();
+        }
+        if (curPortions.getWindowEnergy() > maxWindowEnergy) {
+            maxWindowEnergy = curPortions.getWindowEnergy();
+        }
+    }
+    
+    
+    void normalize() {
+        for (HeartSoundPortion heartSoundPortion : data) {
+            heartSoundPortion.setMagnitude(heartSoundPortion.getMagnitude() / maxMagnitude);
+            heartSoundPortion.setWindowEnergy(heartSoundPortion.getWindowEnergy() / maxWindowEnergy);
         }
     }
 }

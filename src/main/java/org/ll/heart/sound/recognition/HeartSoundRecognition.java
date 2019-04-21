@@ -13,6 +13,7 @@ public class HeartSoundRecognition {
             WavContainer wav = new WavContainer(args[0]);
             wav.makeOutput();
             wav.saveCSV();
+            wav.saveSpectrogramCSV();
             // Output the minimum and maximum value
             System.out.printf("Min: %f, Max: %f\n", wav.getMinValue(), wav.getMaxValue());
         } catch (Exception e) {
