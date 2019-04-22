@@ -11,14 +11,40 @@
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
     
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.4.1</version>
+        </dependency>
+    </dependencies>
+    
     <build>
         <plugins>
+            <plugin> 
+                <groupId>org.apache.maven.plugins</groupId> 
+                <artifactId>maven-dependency-plugin</artifactId> 
+                <configuration> 
+                    <outputDirectory>${project.build.directory}/lib/</outputDirectory> 
+                    <overWriteReleases>false</overWriteReleases> 
+                    <overWriteSnapshots>false</overWriteSnapshots> 
+                    <overWriteIfNewer>true</overWriteIfNewer>
+                </configuration> 
+                <executions> 
+                    <execution> 
+                        <id>copy-dependencies</id> 
+                        <phase>package</phase> 
+                        <goals> 
+                            <goal>copy-dependencies</goal> 
+                        </goals> 
+                    </execution> 
+                </executions> 
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <version>3.0.2</version>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-                    <classifier>jdk${maven.compiler.source}</classifier>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
@@ -28,6 +54,50 @@
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.0.2</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target/</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/resources/</directory>
+                                    <includes>
+                                        <include>*.json</include>
+                                        <include>*.sh</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>process-test-classes</id>
+                        <phase>process-test-classes</phase>
+                        <configuration>
+                            <target>
+                                <chmod file="target/*.sh" perm="755"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
