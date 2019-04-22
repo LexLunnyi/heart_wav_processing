@@ -12,6 +12,7 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.ll.heart.sound.recognition.HeartSoundPortion;
+import org.ll.heart.sound.recognition.MagnitudeHistogram;
 
 /**
  *
@@ -38,11 +39,12 @@ public class WavContainer {
     //private final Date LIMIT_TS_BEGIN = new Date(200);
     //private final Date LIMIT_TS_END = new Date(500);
     private final Date LIMIT_TS_BEGIN = new Date(0);
-    private final Date LIMIT_TS_END = new Date(5000);
-    private static final int WINDOW_SIZE = 256;  //DOI: 10.1109/ISETC.2012.6408110
+    private final Date LIMIT_TS_END = new Date(1000);
+    private static final int WINDOW_SIZE = 128;  //DOI: 10.1109/ISETC.2012.6408110
     private static final int WINDOW_STEP = 16;   //DOI: 10.1109/ISETC.2012.6408110
     private static final double SPECTRUM_LOW = 0.0;
     private static final double SPECTRUM_HIGH = 300.0;
+    MagnitudeHistogram mHisto = new MagnitudeHistogram(WINDOW_SIZE);
     
     private Double maxWindowEnergy = Double.MIN_VALUE;
     private Double maxMagnitude = Double.MIN_VALUE;
@@ -137,17 +139,16 @@ public class WavContainer {
     }
     
     
-    public Complex[] FourierProcessing(HeartSoundPortion curPortion, double[] input, Complex[] prev) {
+    private Complex[] FourierProcessing(HeartSoundPortion curPortion, double[] input, Complex[] prev) {
         Complex[] res = transformer.transform(input, TransformType.FORWARD);
         int size = res.length;
-        double curMagnitude = 0.0D;
+        double curMagnitudeDiff = 0.0D;
         double curPhase = 0.0D;
         double curPhaseDiff = 0.0D;
 
         //String row = tsFormat.format(curPortion.getTs()) + ";";
         for (int i = 1; i < size/2; i++) {
             double curFreq = i * freqStep;
-            
             //Prepare CSV-row for debugging;
             //row += String.format("%.5f/%.2f;", res[i].abs(), (res[i].getArgument() / Math.PI)*180.0);
             
@@ -157,24 +158,23 @@ public class WavContainer {
                 res[i] = new Complex(0);
                 res[size-i] = new Complex(0);
             } else if (null != prev) {
-                curPhaseDiff += calcPhaseSubtraction(prev[i], res[i]);
-                double fEdge = prev[i].abs();
-                double sEdge = res[i].abs();
-                double subValue = Math.sqrt(Math.pow(fEdge, 2) + Math.pow(sEdge, 2) - 2 * fEdge * sEdge * Math.cos(curPhaseDiff * Math.PI));
-                curMagnitude += Math.pow(subValue, 2);
+                double diffAngle = calcPhaseSubtraction(prev[i], res[i]);
+                double diffMagnitude = getMagnitudeSubtraction(prev[i], res[i], diffAngle);
+                curPhaseDiff += diffAngle;
+                curMagnitudeDiff += diffMagnitude;
+                
                 if (0.0D == curPhase) {
                     curPhase = calcPhase(res[i]);
                 }
-                
             }
             //Prepare CSV-row for debugging;
             //row += String.format("%.5f;", res[i].abs());
         }
         //row += "\n";
         //spectrogram.add(row);
-        curPortion.setMagnitude(Math.sqrt(curMagnitude));
+        curPortion.setMagnitude(curMagnitudeDiff);
         curPortion.setPhase(curPhase);
-        curPortion.setPhaseDiff(Math.sqrt(curPhaseDiff));
+        curPortion.setPhaseDiff(curPhaseDiff);
          
         return res;
     }
@@ -233,21 +233,21 @@ public class WavContainer {
             updateExtremums(curPortion);
         }
         normalize();
+        s1s2Detection();
+        System.out.println(mHisto.toString());
+        System.out.println("Threshold: " + mHisto.getThreshold() + "\n");
     }
     
     
-    double getMagnitudeSubtraction(Complex prev, Complex cur) {
-        //double real = prev.getReal() - cur.getReal();
-        //double img = prev.getImaginary() - cur.getImaginary();
-        //return Math.sqrt(real*real + img*img)*10.0;
-        double prevAbs = prev.abs();
-        double curAbs = cur.abs();
-        return Math.sqrt(Math.pow(prevAbs, 2) + Math.pow(curAbs, 2));
+    private double getMagnitudeSubtraction(Complex prev, Complex cur, double angle) {
+        double fEdge = prev.abs();
+        double sEdge = cur.abs();
+        return Math.sqrt(Math.pow(fEdge, 2) + Math.pow(sEdge, 2) - 2*fEdge*sEdge*Math.cos(angle*Math.PI));
     }
     
     
     
-    double calcPhase(Complex cur) {
+    private double calcPhase(Complex cur) {
         double arg = (Math.atan2(cur.getImaginary(), cur.getReal()) / Math.PI)*180.0;
         if (cur.getImaginary() < 0) {
             arg += 360.0;
@@ -256,9 +256,7 @@ public class WavContainer {
     }
     
     
-    double calcPhaseSubtraction(Complex prev, Complex cur) {
-        //Complex diff = new Complex(cur.getReal() - prev.getReal(), cur.getImaginary() - prev.getImaginary());
-        //return calcPhase(diff);
+    private double calcPhaseSubtraction(Complex prev, Complex cur) {
         double res = calcPhase(cur) - calcPhase(prev);
         if (res < -0.5) {
             res += 1.0;
@@ -269,7 +267,7 @@ public class WavContainer {
     }
     
     
-    void updateExtremums(HeartSoundPortion curPortions) {
+    private void updateExtremums(HeartSoundPortion curPortions) {
         if (curPortions.getMagnitude() > maxMagnitude) {
             maxMagnitude = curPortions.getMagnitude();
         }
@@ -279,10 +277,24 @@ public class WavContainer {
     }
     
     
-    void normalize() {
+    public void normalize() {
         for (HeartSoundPortion heartSoundPortion : data) {
             heartSoundPortion.setMagnitude(heartSoundPortion.getMagnitude() / maxMagnitude);
             heartSoundPortion.setWindowEnergy(heartSoundPortion.getWindowEnergy() / maxWindowEnergy);
+            mHisto.push(heartSoundPortion.getMagnitude());
+        }
+    }
+    
+    
+    public void s1s2Detection() {
+        double threshold = mHisto.getThreshold();
+        for (HeartSoundPortion heartSoundPortion : data) {
+            double magnitude = heartSoundPortion.getMagnitude();
+            if (magnitude > threshold) {
+                heartSoundPortion.setWindowEnergy(1.0D);
+            } else {
+                heartSoundPortion.setWindowEnergy(0.0D);
+            }
         }
     }
 }
