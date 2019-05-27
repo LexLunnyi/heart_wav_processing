@@ -40,10 +40,10 @@ public class WavContainer {
     //private final Date LIMIT_TS_END = new Date(500);
     private final Date LIMIT_TS_BEGIN = new Date(0);
     private final Date LIMIT_TS_END = new Date(1000);
-    private static final int WINDOW_SIZE = 128;  //DOI: 10.1109/ISETC.2012.6408110
+    private static final int WINDOW_SIZE = 256;  //DOI: 10.1109/ISETC.2012.6408110
     private static final int WINDOW_STEP = 16;   //DOI: 10.1109/ISETC.2012.6408110
-    private static final double SPECTRUM_LOW = 0.0;
-    private static final double SPECTRUM_HIGH = 300.0;
+    private static final double SPECTRUM_LOW = 55.0;
+    private static final double SPECTRUM_HIGH = 165.0;
     MagnitudeHistogram mHisto = new MagnitudeHistogram(WINDOW_SIZE);
     
     private Double maxWindowEnergy = Double.MIN_VALUE;
@@ -150,7 +150,6 @@ public class WavContainer {
         for (int i = 1; i < size/2; i++) {
             double curFreq = i * freqStep;
             //Prepare CSV-row for debugging;
-            //row += String.format("%.5f/%.2f;", res[i].abs(), (res[i].getArgument() / Math.PI)*180.0);
             
             //Make bandpass filtration
             if ((curFreq <= SPECTRUM_LOW) || (curFreq >= SPECTRUM_HIGH)) {
@@ -186,6 +185,7 @@ public class WavContainer {
         long size = data.size();
         double[] input = new double[WINDOW_SIZE];
         int FIRST = WINDOW_SIZE/2 - WINDOW_STEP/2;
+        double freqStep = (double)sampleRate / (double)WINDOW_SIZE;
         
         Complex[] output = null;  
         Complex[] fftData = null;
@@ -205,7 +205,7 @@ public class WavContainer {
             
             HeartSoundPortion curPortion = data.get(index + FIRST);
             fftData = FourierProcessing(curPortion, input, fftData);
-            
+                    
             magnitude = curPortion.getMagnitude();
             phase = curPortion.getPhase();
             diffPhase = curPortion.getPhaseDiff();
