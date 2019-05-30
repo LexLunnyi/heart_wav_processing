@@ -44,7 +44,7 @@ public class MagnitudeHistogram {
         int sum = 0;
         for (int i = 0; i < size; i++) {
             sum += values[i];
-            if ((double)sum/(double)count >= 0.5D) {
+            if ((double)sum/(double)count >= 0.8D) {
                 return (double)(i+1)/(double)size;
             }
         }

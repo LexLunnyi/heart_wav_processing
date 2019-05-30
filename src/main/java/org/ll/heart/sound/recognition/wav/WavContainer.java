@@ -36,12 +36,12 @@ public class WavContainer {
     private long sampleRate = 0;
     FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
     
-    //private final Date LIMIT_TS_BEGIN = new Date(200);
-    //private final Date LIMIT_TS_END = new Date(500);
     private final Date LIMIT_TS_BEGIN = new Date(0);
     private final Date LIMIT_TS_END = new Date(1000);
-    private static final int WINDOW_SIZE = 256;  //DOI: 10.1109/ISETC.2012.6408110
-    private static final int WINDOW_STEP = 16;   //DOI: 10.1109/ISETC.2012.6408110
+    //private final Date LIMIT_TS_BEGIN = new Date(276);
+    //private final Date LIMIT_TS_END = new Date(1276);
+    private static final int WINDOW_SIZE = 64;  //DOI: 10.1109/ISETC.2012.6408110
+    private static final int WINDOW_STEP = 2;   //DOI: 10.1109/ISETC.2012.6408110
     private static final double SPECTRUM_LOW = 55.0;
     private static final double SPECTRUM_HIGH = 165.0;
     MagnitudeHistogram mHisto = new MagnitudeHistogram(WINDOW_SIZE);
@@ -145,7 +145,7 @@ public class WavContainer {
         double curMagnitudeDiff = 0.0D;
         double curPhase = 0.0D;
         double curPhaseDiff = 0.0D;
-
+        
         //String row = tsFormat.format(curPortion.getTs()) + ";";
         for (int i = 1; i < size/2; i++) {
             double curFreq = i * freqStep;
@@ -157,7 +157,7 @@ public class WavContainer {
                 res[i] = new Complex(0);
                 res[size-i] = new Complex(0);
             } else if (null != prev) {
-                double diffAngle = calcPhaseSubtraction(prev[i], res[i]);
+                double diffAngle = calcPhaseSubtraction(prev[i], res[i], curFreq);
                 double diffMagnitude = getMagnitudeSubtraction(prev[i], res[i], diffAngle);
                 curPhaseDiff += diffAngle;
                 curMagnitudeDiff += diffMagnitude;
@@ -256,8 +256,9 @@ public class WavContainer {
     }
     
     
-    private double calcPhaseSubtraction(Complex prev, Complex cur) {
-        double res = calcPhase(cur) - calcPhase(prev);
+    private double calcPhaseSubtraction(Complex prev, Complex cur, double curFreq) {
+        double phaseOffset = ((double)WINDOW_STEP / (double)sampleRate)*curFreq;
+        double res = calcPhase(cur) - calcPhase(prev) + phaseOffset;
         if (res < -0.5) {
             res += 1.0;
         } else if (res > 0.5) {
