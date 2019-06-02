@@ -47,7 +47,7 @@ public class Listings {
             //Выполняем обратное преобразование Фурье для получения отфильтрованного сигнала
             output = transformer.transform(fftData, TransformType.INVERSE);
             for(int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
-                //Сохраняем результаты в выходной массив
+                //Сохраняем отфильтрованные данные в выходной массив
                 HeartSoundPortion cur = data.get(index + j);
                 cur.setMagnitude(magnitude);
                 if (output[j].getReal() < 0) {
@@ -103,7 +103,7 @@ public class Listings {
     //Функция для вычисления разницы фаз одной гармоники в два соседних момента времени
     private double calcPhaseSubtraction(Complex prev, Complex cur, double curFreq) {
         //Получаем смещенние фаз гармоники, которое должно быть между
-        final double phaseOffset = ((double)WINDOW_STEP / (double)sampleRate)*curFreq;
+        final double phaseOffset = 2.0*Math.PI*((double)WINDOW_STEP / (double)sampleRate)*curFreq;
         //Приводим угол к расположению в I,IV четвертях для дальнейших вычислений
         double res = calcPhase(cur) - calcPhase(prev) + phaseOffset;
         if (res < -1.0 * Math.PI) {
