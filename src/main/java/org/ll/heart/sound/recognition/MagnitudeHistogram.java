@@ -38,7 +38,7 @@ public class MagnitudeHistogram {
             //Определяем сколько елементов добавлено в первые i счетчиков
             sum += counters[i];
             //Если в процентном соотношении оно превышает порог
-            if ((double)sum/(double)count >= 0.8D) {
+            if ((double)sum/(double)count >= 0.75D) {
                 //то возращаем граничное значение счетчика,
                 //оно и будет разделять все отсчеты сигнала на 2 группы
                 return (double)(i+1)/(double)size;

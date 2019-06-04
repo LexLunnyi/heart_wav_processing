@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.ll.heart.sound.recognition.HeartSoundPortion;
 import org.ll.heart.sound.recognition.MagnitudeHistogram;
+import org.ll.heart.sound.recognition.SxNode;
 
 /**
  *
@@ -26,6 +28,7 @@ import org.ll.heart.sound.recognition.MagnitudeHistogram;
 public class WavContainer {
 
     private final List<HeartSoundPortion> data = new ArrayList<>();
+    private final List<SxNode> nodes = new ArrayList<>();
     private final List<String> spectrogram = new ArrayList<>();
     
     private final String fileName;
@@ -37,7 +40,7 @@ public class WavContainer {
     FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
     
     private final Date LIMIT_TS_BEGIN = new Date(0);
-    private final Date LIMIT_TS_END = new Date(1000);
+    private final Date LIMIT_TS_END = new Date(6000);
     //private final Date LIMIT_TS_BEGIN = new Date(276);
     //private final Date LIMIT_TS_END = new Date(1276);
     private static final int WINDOW_SIZE = 64;  //DOI: 10.1109/ISETC.2012.6408110
@@ -123,8 +126,13 @@ public class WavContainer {
     public void saveCSV() throws IOException {
         try (FileWriter fileWriter = new FileWriter("output.csv")) {
             for (HeartSoundPortion heartSoundPortion : data) {
-                String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%.5f;%.5f;\n", 
-                        heartSoundPortion.getIn(), heartSoundPortion.getOut(), heartSoundPortion.getMagnitude(), heartSoundPortion.getWindowEnergy());
+                String Svals = (heartSoundPortion.isSx()) ? "1;" : "0;";
+                Svals += (heartSoundPortion.isS1()) ? "1;" : "0;";
+                Svals += (heartSoundPortion.isS2()) ? "1;" : "0;";
+                //String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%.5f;%.5f;\n", 
+                //       heartSoundPortion.getIn(), heartSoundPortion.getOut(), heartSoundPortion.getMagnitude(), heartSoundPortion.getWindowEnergy());
+                String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%s\n", 
+                                             heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
                 fileWriter.write(row);
             }
         }
@@ -287,15 +295,67 @@ public class WavContainer {
     }
     
     
+    
+    
     public void s1s2Detection() {
+        final Double THRESHOLD_MAGNITUDE = 0.3;
+        final Double THRESHOLD_DURATION = 0.03;
+        
+        //Детектируем основные тона
+        sxDetection();
+        //Фильтруем основные тона по длительности и энергии
+        int index = 0;
+        while (nodes.size() > index) {
+            SxNode sxNode = nodes.get(index);
+            boolean remove = (sxNode.getAvgMagnitude() < THRESHOLD_MAGNITUDE);
+            remove |= (((double)sxNode.getDuration()/(double)sampleRate) < THRESHOLD_DURATION);
+            if (remove) {
+                nodes.remove(index);
+            } else {
+                index++;
+            }
+            
+        }
+        
+        //Восстанавливаем сигнал в выходных данных
+        //Собираем гистограммы по длительности и энергии 
+        //Классифицируем тона по порогам из гистограммы
+        //
+    }
+    
+    
+    
+    
+    public void sxDetection() {
+        SxNode sxNode = null;
+        long index = 0;
+        boolean predSx = false;
         double threshold = mHisto.getThreshold();
         for (HeartSoundPortion heartSoundPortion : data) {
             double magnitude = heartSoundPortion.getMagnitude();
-            if (magnitude > threshold) {
-                heartSoundPortion.setWindowEnergy(1.0D);
+            boolean Sx = (magnitude > threshold);
+            heartSoundPortion.setSx(Sx);
+            
+            if (Sx && !predSx) {
+                //Если есть предыдущая нода, то сохраняем ее
+                if (sxNode != null) {
+                    sxNode.finalize(index);
+                    nodes.add(sxNode);
+                }
+                //Создаем новую ноду
+                sxNode = new SxNode(index);
+            } else if (Sx && predSx) {
+                //Усредняем магнитуду для ноды
+                sxNode.processMagnitude(magnitude);
+            } else if (!Sx && predSx) {
+                //Кончился основной тон
+                sxNode.SxDone(index);
             } else {
-                heartSoundPortion.setWindowEnergy(0.0D);
+                //Идет систола или диастола
             }
+            
+            predSx = Sx;
+            index++;
         }
     }
 }
