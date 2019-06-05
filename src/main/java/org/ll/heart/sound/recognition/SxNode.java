@@ -58,4 +58,9 @@ public class SxNode {
     public long getIndexSx() {
         return indexSx;
     }
-}
+    
+    public double getRelativeDuration() {
+        double upper = (double)(indexSx - indexBegin);
+        return (upper/((double)duration));
+    }
+ }

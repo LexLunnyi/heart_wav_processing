@@ -299,8 +299,7 @@ public class WavContainer {
     }
     
     
-    
-    
+
     public void s1s2Detection() {
         final Double THRESHOLD_MAGNITUDE = 0.2;
         final Double THRESHOLD_DURATION = 0.03;
@@ -310,15 +309,17 @@ public class WavContainer {
         //Фильтруем основные тона по длительности и энергии
         int index = 0;
         while (nodes.size() > index) {
-            SxNode sxNode = nodes.get(index);
+            SxNode sxNode = nodes.get(index); //Получаем элемент из массива
+            //Если разница магнитуд зменьше порога - помечаем элемент на удаление
             boolean remove = (sxNode.getMaxMagnitude() < THRESHOLD_MAGNITUDE);
+            //Если длительность тона ниже порога - помечаем элемент на удаления
             remove |= (((double)sxNode.getDuration()/(double)sampleRate) < THRESHOLD_DURATION);
-            if (remove) {
+            if (remove) { //Обнуляем маркер Sx для ложных срабатываний
                 for(long j = sxNode.getIndexBegin(); j < sxNode.getIndexSx(); j++) {
                     HeartSoundPortion sp = data.get((int)j);
                     sp.setSx(false);
                 }
-                nodes.remove(index);
+                nodes.remove(index);//Удаляем отфильтрованный элемент
             } else {
                 index++;
             }
@@ -330,7 +331,7 @@ public class WavContainer {
         MagnitudeHistogram durHist = new MagnitudeHistogram(16, 0.5D);
         for(SxNode sxNode: nodes) {
             magHist.push(sxNode.getMaxMagnitude());
-            durHist.push((double)(sxNode.getIndexSx()-sxNode.getIndexBegin()) / sxNode.getDuration());
+            durHist.push(sxNode.getRelativeDuration());
         }
         System.out.println(magHist.toString("MAG"));
         System.out.println("MAG threshold: " + magHist.getThreshold());
@@ -341,12 +342,17 @@ public class WavContainer {
         for(SxNode sxNode: nodes) {
             boolean S1 = false;
             boolean S2 = false;
+            //Классифицируем тона по разнице магнитуд
             if (sxNode.getMaxMagnitude() > magHist.getThreshold()) {
                 S1 = true;
             } else {
                 S2 = true;
             }
+            //Классифицируем тона по относительной длительности
+            S1 &= (sxNode.getRelativeDuration() > durHist.getThreshold());
+            S2 &= (sxNode.getRelativeDuration() <= durHist.getThreshold());
             for(long j = sxNode.getIndexBegin(); j < sxNode.getIndexSx(); j++) {
+                //Маркируем отчеты исходного сигнала на принадлежность к S1 или S2
                 HeartSoundPortion sp = data.get((int)j);
                 sp.setS1(S1);
                 sp.setS2(S2);
