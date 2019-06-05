@@ -356,33 +356,35 @@ public class WavContainer {
     
     
     
-    
+    //Функция получения массивы осных тонов из массива выходных данных
     public void sxDetection(boolean useOwnSx) {
+        //Очищаем массив основных тонов
         nodes.clear();
         SxNode sxNode = null;
         long index = 0;
         boolean predSx = false;
+        //Определяем пороговое значение разницы магнитуд спектра
         double threshold = mHisto.getThreshold();
         for (HeartSoundPortion heartSoundPortion : data) {
             double magnitude = heartSoundPortion.getMagnitude();
             boolean Sx = (useOwnSx) ? heartSoundPortion.isSx() : (magnitude > threshold);
+            //Считаем отчет принадлежащим основному тону (Sx=true) или нет (Sx=false)
             heartSoundPortion.setSx(Sx);
-            
-            if (Sx && !predSx) {
-                //Если есть предыдущая нода, то сохраняем ее
+            if (Sx && !predSx) {//Если текущий отчет стал основным
+                //Если есть предыдущий тон, то сохраняем его
                 if (sxNode != null) {
                     sxNode.finalize(index);
                     nodes.add(sxNode);
                 }
                 //Создаем новую ноду
                 sxNode = new SxNode(index);
-            } else if (Sx && predSx) {
-                //Усредняем магнитуду для ноды
+            } else if (Sx && predSx) {//Если текущий отчет по-прежнему основной
+                //Ищем максимальное значение магнитуды в тоне
                 sxNode.processMagnitude(magnitude);
-            } else if (!Sx && predSx) {
+            } else if (!Sx && predSx) {//Если текущий отчет перестал быть основным
                 //Кончился основной тон
                 sxNode.SxDone(index);
-            } else {
+            } else {//Если текущий отчет по-прежнему не оснвной
                 //Идет систола или диастола
             }
             
