@@ -13,8 +13,7 @@ public class SxNode {
     private long indexBegin = 0;
     private long indexSx = 0;
     private long indexEnd = 0;
-    private double sumMagnitude = 0.0;
-    private double avgMagnitude = 0.0;
+    private double maxMagnitude = 0.0;
     private long duration = 0;
     private boolean s1 = false;
     private boolean s2 = false;
@@ -24,12 +23,11 @@ public class SxNode {
     }
     
     public void processMagnitude(double magnitude) {
-        sumMagnitude += magnitude;
+        maxMagnitude = (magnitude > maxMagnitude) ? magnitude : maxMagnitude;
     }
     
     public void SxDone(long index) {
         indexSx = index;
-        avgMagnitude = sumMagnitude / (double)(indexSx - indexBegin);
     }
     
     public void finalize(long index) {
@@ -37,8 +35,8 @@ public class SxNode {
         duration = indexEnd - indexBegin;
     }
 
-    public double getAvgMagnitude() {
-        return avgMagnitude;
+    public double getMaxMagnitude() {
+        return maxMagnitude;
     }
 
     public long getDuration() {
@@ -52,6 +50,12 @@ public class SxNode {
     public boolean isS2() {
         return s2;
     }
-    
-    
+
+    public long getIndexBegin() {
+        return indexBegin;
+    }
+
+    public long getIndexSx() {
+        return indexSx;
+    }
 }

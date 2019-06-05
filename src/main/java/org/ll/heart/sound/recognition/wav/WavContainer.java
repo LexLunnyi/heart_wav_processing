@@ -47,7 +47,7 @@ public class WavContainer {
     private static final int WINDOW_STEP = 2;   //DOI: 10.1109/ISETC.2012.6408110
     private static final double SPECTRUM_LOW = 55.0;
     private static final double SPECTRUM_HIGH = 165.0;
-    MagnitudeHistogram mHisto = new MagnitudeHistogram(WINDOW_SIZE);
+    MagnitudeHistogram mHisto = new MagnitudeHistogram(WINDOW_SIZE, 0.75D);
     
     private Double maxWindowEnergy = Double.MIN_VALUE;
     private Double maxMagnitude = Double.MIN_VALUE;
@@ -125,15 +125,19 @@ public class WavContainer {
     
     public void saveCSV() throws IOException {
         try (FileWriter fileWriter = new FileWriter("output.csv")) {
+            long index = 0;
             for (HeartSoundPortion heartSoundPortion : data) {
                 String Svals = (heartSoundPortion.isSx()) ? "1;" : "0;";
                 Svals += (heartSoundPortion.isS1()) ? "1;" : "0;";
                 Svals += (heartSoundPortion.isS2()) ? "1;" : "0;";
                 //String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%.5f;%.5f;\n", 
                 //       heartSoundPortion.getIn(), heartSoundPortion.getOut(), heartSoundPortion.getMagnitude(), heartSoundPortion.getWindowEnergy());
-                String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%s\n", 
+                //String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%s\n", 
+                //                             heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
+                String row = String.format("%.5f;%.5f;%.5f;%s\n", (double)index/(double)sampleRate,
                                              heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
                 fileWriter.write(row);
+                index++;
             }
         }
     }
@@ -298,42 +302,70 @@ public class WavContainer {
     
     
     public void s1s2Detection() {
-        final Double THRESHOLD_MAGNITUDE = 0.3;
+        final Double THRESHOLD_MAGNITUDE = 0.2;
         final Double THRESHOLD_DURATION = 0.03;
         
         //Детектируем основные тона
-        sxDetection();
+        sxDetection(false);
         //Фильтруем основные тона по длительности и энергии
         int index = 0;
         while (nodes.size() > index) {
             SxNode sxNode = nodes.get(index);
-            boolean remove = (sxNode.getAvgMagnitude() < THRESHOLD_MAGNITUDE);
+            boolean remove = (sxNode.getMaxMagnitude() < THRESHOLD_MAGNITUDE);
             remove |= (((double)sxNode.getDuration()/(double)sampleRate) < THRESHOLD_DURATION);
             if (remove) {
+                for(long j = sxNode.getIndexBegin(); j < sxNode.getIndexSx(); j++) {
+                    HeartSoundPortion sp = data.get((int)j);
+                    sp.setSx(false);
+                }
                 nodes.remove(index);
             } else {
                 index++;
             }
-            
         }
+        sxDetection(true);
+        System.out.println("Nodes size: " + nodes.size() + "\n");
+        //Собираем гистограммы по длительности и энергии
+        MagnitudeHistogram magHist = new MagnitudeHistogram(16, 0.5D);
+        MagnitudeHistogram durHist = new MagnitudeHistogram(16, 0.5D);
+        for(SxNode sxNode: nodes) {
+            magHist.push(sxNode.getMaxMagnitude());
+            durHist.push((double)(sxNode.getIndexSx()-sxNode.getIndexBegin()) / sxNode.getDuration());
+        }
+        System.out.println(magHist.toString("MAG"));
+        System.out.println("MAG threshold: " + magHist.getThreshold());
+        System.out.println(durHist.toString("DUR"));
+        System.out.println("DUR threshold: " + durHist.getThreshold());
         
-        //Восстанавливаем сигнал в выходных данных
-        //Собираем гистограммы по длительности и энергии 
         //Классифицируем тона по порогам из гистограммы
-        //
+        for(SxNode sxNode: nodes) {
+            boolean S1 = false;
+            boolean S2 = false;
+            if (sxNode.getMaxMagnitude() > magHist.getThreshold()) {
+                S1 = true;
+            } else {
+                S2 = true;
+            }
+            for(long j = sxNode.getIndexBegin(); j < sxNode.getIndexSx(); j++) {
+                HeartSoundPortion sp = data.get((int)j);
+                sp.setS1(S1);
+                sp.setS2(S2);
+            }
+        }
     }
     
     
     
     
-    public void sxDetection() {
+    public void sxDetection(boolean useOwnSx) {
+        nodes.clear();
         SxNode sxNode = null;
         long index = 0;
         boolean predSx = false;
         double threshold = mHisto.getThreshold();
         for (HeartSoundPortion heartSoundPortion : data) {
             double magnitude = heartSoundPortion.getMagnitude();
-            boolean Sx = (magnitude > threshold);
+            boolean Sx = (useOwnSx) ? heartSoundPortion.isSx() : (magnitude > threshold);
             heartSoundPortion.setSx(Sx);
             
             if (Sx && !predSx) {

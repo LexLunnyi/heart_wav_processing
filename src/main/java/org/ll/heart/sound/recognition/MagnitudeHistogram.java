@@ -4,6 +4,7 @@ package org.ll.heart.sound.recognition;
  * !!!! FOR NORMALIZED VALUES ONLY !!!!
  */
 public class MagnitudeHistogram {
+    private final double divider;
     //Количество счетчиков в гистограмме
     private final int size;
     //Массив со счетчиками
@@ -12,7 +13,8 @@ public class MagnitudeHistogram {
     private int count = 0;
     
     //В конструкторе указываем сколько счетчиков будет в гистограмме
-    public MagnitudeHistogram(int size) {
+    public MagnitudeHistogram(int size, double divider) {
+        this.divider = divider;
         this.size = size;
         this.counters = new int[size];
     }
@@ -38,21 +40,21 @@ public class MagnitudeHistogram {
             //Определяем сколько елементов добавлено в первые i счетчиков
             sum += counters[i];
             //Если в процентном соотношении оно превышает порог
-            if ((double)sum/(double)count >= 0.75D) {
+            if ((double)sum/(double)count >= divider) {
                 //то возращаем граничное значение счетчика,
                 //оно и будет разделять все отсчеты сигнала на 2 группы
-                return (double)(i+1)/(double)size;
+                return (double)(i)/(double)size;
             }
         }
         return 0.0D;
     }
     
 
-    @Override
-    public String toString() {
+    //@Override
+    public String toString(String filter) {
         String res = "MagnitudeHistogram{" + "size=" + size + ", counters: \n";
         for (int i = 0; i < size; i++) {
-            res += i + ";" + counters[i] + ";\n";
+            res += filter + "=>" + i + ";" + counters[i] + ";\n";
         }
         res += "}\n";
         return res;
