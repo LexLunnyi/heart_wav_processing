@@ -16,6 +16,9 @@ public class HeartSoundPortion {
     private Double phase;
     private Double phaseDiff;
     private Double windowEnergy;
+    private boolean Sx;
+    private boolean S1;
+    private boolean S2;
     private final List<HeartSoundSpectrumPortion> spectrum = new ArrayList<>();
 
     public HeartSoundPortion(Date ts, Double in) {
@@ -26,6 +29,9 @@ public class HeartSoundPortion {
         this.phase = 0.0D;
         this.phaseDiff = 0.0D;
         this.windowEnergy = 0.0D;
+        this.Sx = false;
+        this.S1 = false;
+        this.S2 = false;
     }
 
     public Date getTs() {
@@ -80,6 +86,30 @@ public class HeartSoundPortion {
         return spectrum;
     }
 
+    public boolean isSx() {
+        return Sx;
+    }
+
+    public void setSx(boolean Sx) {
+        this.Sx = Sx;
+    }
+
+    public boolean isS1() {
+        return S1;
+    }
+
+    public void setS1(boolean S1) {
+        this.S1 = S1;
+    }
+
+    public boolean isS2() {
+        return S2;
+    }
+
+    public void setS2(boolean S2) {
+        this.S2 = S2;
+    }
+    
     @Override
     public String toString() {
         return "HeartSoundPortion{" + "ts=" + ts + ", in=" + in + ", out=" + out + ", spectrum=" + spectrum + '}';
