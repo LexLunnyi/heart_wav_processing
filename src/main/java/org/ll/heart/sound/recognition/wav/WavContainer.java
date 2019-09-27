@@ -40,11 +40,13 @@ public class WavContainer {
     FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
     
     private final Date LIMIT_TS_BEGIN = new Date(0);
-    private final Date LIMIT_TS_END = new Date(6000);
+    private final Date LIMIT_TS_END = new Date(2000);
     //private final Date LIMIT_TS_BEGIN = new Date(276);
     //private final Date LIMIT_TS_END = new Date(1276);
-    private static final int WINDOW_SIZE = 64;  //DOI: 10.1109/ISETC.2012.6408110
-    private static final int WINDOW_STEP = 2;   //DOI: 10.1109/ISETC.2012.6408110
+    //private static final int WINDOW_SIZE = 64;  //DOI: 10.1109/ISETC.2012.6408110
+    //private static final int WINDOW_STEP = 2;   //DOI: 10.1109/ISETC.2012.6408110
+    private static final int WINDOW_SIZE = 512;  //DOI: 10.1109/ISETC.2012.6408110
+    private static final int WINDOW_STEP = 32;   //DOI: 10.1109/ISETC.2012.6408110
     private static final double SPECTRUM_LOW = 55.0;
     private static final double SPECTRUM_HIGH = 165.0;
     MagnitudeHistogram mHisto = new MagnitudeHistogram(WINDOW_SIZE, 0.75D);
