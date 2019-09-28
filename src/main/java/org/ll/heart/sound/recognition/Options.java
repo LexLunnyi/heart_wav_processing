@@ -12,14 +12,16 @@ import java.util.Properties;
  * @author aberdnikov
  */
 
-
 public class Options {
     int windowSize;
     int windowStep;
-    int bandpassLow;
-    int bandpassHight;
+    double bandpassLow;
+    double bandpassHight;
     String inputDir;
     String outputDir;
+    boolean wavLengthLimited;
+    int wavLengthMin;
+    int wavLengthMax;
     List<HeartSoundCategory> categories = new ArrayList();
     
     public Options(String path) {
@@ -32,11 +34,14 @@ public class Options {
             // get the property value and print it out
             windowSize = Integer.parseInt(prop.getProperty("window.size"));
             windowStep = Integer.parseInt(prop.getProperty("window.step"));
-            bandpassLow = Integer.parseInt(prop.getProperty("bandpass.low"));
-            bandpassHight = Integer.parseInt(prop.getProperty("bandpass.hight"));
+            bandpassLow = Double.parseDouble(prop.getProperty("bandpass.low"));
+            bandpassHight = Double.parseDouble(prop.getProperty("bandpass.hight"));
             inputDir = prop.getProperty("data.input.dir");
             outputDir = prop.getProperty("data.output.dir");
-            
+            wavLengthLimited = Boolean.parseBoolean(prop.getProperty("wav.length.limited"));
+            wavLengthMin = Integer.parseInt(prop.getProperty("wav.length.min"));
+            wavLengthMax = Integer.parseInt(prop.getProperty("wav.length.max"));
+
             int categoriesCount = Integer.parseInt(prop.getProperty("categories.count"));
             for(int i = 1; i <= categoriesCount; i++) {
                 String catName = prop.getProperty("categories[" + i + "].name");
@@ -67,11 +72,15 @@ public class Options {
         System.out.print("  windowSize -> " + Integer.toString(windowSize) + "\n");
         System.out.print("  windowStep -> " + Integer.toString(windowStep) + "\n");
         System.out.print("  \n");
-        System.out.print("  bandpassLow -> " + Integer.toString(bandpassLow) + "\n");
-        System.out.print("  bandpassHight -> " + Integer.toString(bandpassHight) + "\n");
+        System.out.print("  bandpassLow -> " + Double.toString(bandpassLow) + "\n");
+        System.out.print("  bandpassHight -> " + Double.toString(bandpassHight) + "\n");
         System.out.print("  \n");
         System.out.print("  inputDir -> " + inputDir + "\n");
         System.out.print("  outputDir -> " + outputDir + "\n");
+        System.out.print("  \n");
+        System.out.print("  wavLengthLimited -> " + Boolean.toString(wavLengthLimited) + "\n");
+        System.out.print("  wavLengthMin -> " + Integer.toString(wavLengthMin) + "\n");
+        System.out.print("  wavLengthMax -> " + Integer.toString(wavLengthMax) + "\n");
         System.out.print("  \n");
         int index = 1;
         for(HeartSoundCategory cat: categories) {
@@ -88,47 +97,39 @@ public class Options {
         return windowSize;
     }
 
-    public void setWindowSize(int windowSize) {
-        this.windowSize = windowSize;
-    }
-
     public int getWindowStep() {
         return windowStep;
     }
 
-    public void setWindowStep(int windowStep) {
-        this.windowStep = windowStep;
-    }
-
-    public int getBandpassLow() {
+    public double getBandpassLow() {
         return bandpassLow;
     }
 
-    public void setBandpassLow(int bandpassLow) {
-        this.bandpassLow = bandpassLow;
-    }
-
-    public int getBandpassHight() {
+    public double getBandpassHight() {
         return bandpassHight;
-    }
-
-    public void setBandpassHight(int bandpassHight) {
-        this.bandpassHight = bandpassHight;
     }
 
     public String getInputDir() {
         return inputDir;
     }
 
-    public void setInputDir(String inputDir) {
-        this.inputDir = inputDir;
-    }
-
     public String getOutputDir() {
         return outputDir;
     }
 
-    public void setOutputDir(String outputDir) {
-        this.outputDir = outputDir;
+    public boolean isWavLengthLimited() {
+        return wavLengthLimited;
+    }
+
+    public int getWavLengthMin() {
+        return wavLengthMin;
+    }
+
+    public int getWavLengthMax() {
+        return wavLengthMax;
+    }
+
+    public List<HeartSoundCategory> getCategories() {
+        return categories;
     }
 }

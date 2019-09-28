@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -14,73 +13,62 @@ import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.ll.heart.sound.recognition.HeartSoundPortion;
 import org.ll.heart.sound.recognition.MagnitudeHistogram;
+import org.ll.heart.sound.recognition.Options;
 import org.ll.heart.sound.recognition.SxNode;
 
 /**
  *
  * @author aberdnikov
- * 
- * 
- * 1) Рефакторинг кода.
- * 2) Нормализовать энергию окна и магнитуду сигнала.
- * 3) Определиться с критерием завершения сигнала.
  */
 public class WavContainer {
+
+    private final double HIST_THRES_MAGNITUDE = 0.75D;
 
     private final List<HeartSoundPortion> data = new ArrayList<>();
     private final List<SxNode> nodes = new ArrayList<>();
     private final List<String> spectrogram = new ArrayList<>();
-    
+
     private final String fileName;
     private final SimpleDateFormat tsFormat = new SimpleDateFormat("mm:ss.S");
+
+    private final FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
+    private final MagnitudeHistogram mHisto;
+    private final Options options;
+    private final Date WAV_LIMIT_BEGIN;
+    private final Date WAV_LIMIT_END;
+
+    private Double maxWindowEnergy = Double.MIN_VALUE;
+    private Double maxMagnitude = Double.MIN_VALUE;
+
     private Double maxValue = Double.MIN_VALUE;
     private Double minValue = Double.MAX_VALUE;
     private Double freqStep = 0.0D;
     private long sampleRate = 0;
-    FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
-    
-    private final Date LIMIT_TS_BEGIN = new Date(0);
-    private final Date LIMIT_TS_END = new Date(2000);
-    //private final Date LIMIT_TS_BEGIN = new Date(276);
-    //private final Date LIMIT_TS_END = new Date(1276);
-    //private static final int WINDOW_SIZE = 64;  //DOI: 10.1109/ISETC.2012.6408110
-    //private static final int WINDOW_STEP = 2;   //DOI: 10.1109/ISETC.2012.6408110
-    private static final int WINDOW_SIZE = 512;  //DOI: 10.1109/ISETC.2012.6408110
-    private static final int WINDOW_STEP = 32;   //DOI: 10.1109/ISETC.2012.6408110
-    private static final double SPECTRUM_LOW = 55.0;
-    private static final double SPECTRUM_HIGH = 165.0;
-    MagnitudeHistogram mHisto = new MagnitudeHistogram(WINDOW_SIZE, 0.75D);
-    
-    private Double maxWindowEnergy = Double.MIN_VALUE;
-    private Double maxMagnitude = Double.MIN_VALUE;
 
-    public WavContainer(String fileName) throws IOException, Exception {
+    public WavContainer(String fileName, Options options) throws IOException, Exception {
         this.fileName = fileName;
-
+        this.options = options;
+        this.mHisto = new MagnitudeHistogram(options.getWindowSize(), HIST_THRES_MAGNITUDE);
+        this.WAV_LIMIT_BEGIN = new Date(options.getWavLengthMin());
+        this.WAV_LIMIT_END = new Date(options.getWavLengthMax());
         long index = 0;
         // Open the wav file specified as the first argument
         WavFile wavFile = WavFile.openWavFile(new File(fileName));
-
         // Display information about the wav file
         wavFile.display();
-
         // Get the number of audio channels in the wav file
         int numChannels = wavFile.getNumChannels();
         if (numChannels > 1) {
             throw new Exception("Stereo records still not supported");
         }
-
         sampleRate = wavFile.getSampleRate();
-        freqStep = (double)sampleRate / (double)WINDOW_SIZE;
-
-        // Create a buffer of 100 frames
-        double[] buffer = new double[WINDOW_SIZE * numChannels];
-
+        freqStep = (double) sampleRate / (double) options.getWindowSize();
+        // Create a buffer of N frames
+        double[] buffer = new double[options.getWindowSize() * numChannels];
         int framesRead;
         do {
             // Read frames into buffer
-            framesRead = wavFile.readFrames(buffer, WINDOW_SIZE);
-
+            framesRead = wavFile.readFrames(buffer, options.getWindowSize());
             // Loop through frames and look for minimum and maximum value
             for (int s = 0; s < framesRead * numChannels; s++) {
                 index++;
@@ -91,42 +79,32 @@ public class WavContainer {
                     minValue = buffer[s];
                 }
                 Date ts = new Date((index * 1000) / sampleRate);
-                if (ts.compareTo(LIMIT_TS_BEGIN) < 0) {
-                    continue;
-                }
-                if (ts.compareTo(LIMIT_TS_END) > 0) {
-                    framesRead = 0;
-                    break;
+                if (options.isWavLengthLimited()) {
+                    if (ts.compareTo(WAV_LIMIT_BEGIN) < 0) {
+                        continue;
+                    }
+                    if (ts.compareTo(WAV_LIMIT_END) > 0) {
+                        framesRead = 0;
+                        break;
+                    }
                 }
                 data.add(new HeartSoundPortion(ts, buffer[s]));
             }
-            
-            //
         } while (framesRead != 0);
         // Close the wavFile
         wavFile.close();
     }
-    
-    
-    
 
     public Double getMaxValue() {
         return maxValue;
     }
 
-    
-    
-    
     public Double getMinValue() {
         return minValue;
     }
 
-    
-    
-    
-    
-    public void saveCSV() throws IOException {
-        try (FileWriter fileWriter = new FileWriter("output.csv")) {
+    public void saveCSV(String fileName) throws IOException {
+        try (FileWriter fileWriter = new FileWriter(fileName)) {
             long index = 0;
             for (HeartSoundPortion heartSoundPortion : data) {
                 String Svals = (heartSoundPortion.isSx()) ? "1;" : "0;";
@@ -136,14 +114,14 @@ public class WavContainer {
                 //       heartSoundPortion.getIn(), heartSoundPortion.getOut(), heartSoundPortion.getMagnitude(), heartSoundPortion.getWindowEnergy());
                 //String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%s\n", 
                 //                             heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
-                String row = String.format("%.5f;%.5f;%.5f;%s\n", (double)index/(double)sampleRate,
-                                             heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
+                String row = String.format("%.5f;%.5f;%.5f;%s\n", (double) index / (double) sampleRate,
+                        heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
                 fileWriter.write(row);
                 index++;
             }
         }
     }
-    
+
     public void saveSpectrogramCSV() throws IOException {
         try (FileWriter fileWriter = new FileWriter("spectrogram.csv")) {
             for (String row : spectrogram) {
@@ -151,36 +129,31 @@ public class WavContainer {
             }
         }
     }
-    
-    
+
     private Complex[] FourierProcessing(HeartSoundPortion curPortion, double[] input, Complex[] prev) {
         Complex[] res = transformer.transform(input, TransformType.FORWARD);
         int size = res.length;
         double curMagnitudeDiff = 0.0D;
         double curPhase = 0.0D;
         double curPhaseDiff = 0.0D;
-        
         //String row = tsFormat.format(curPortion.getTs()) + ";";
-        for (int i = 1; i < size/2; i++) {
+        for (int i = 1; i < size / 2; i++) {
             double curFreq = i * freqStep;
-            //Prepare CSV-row for debugging;
-            
             //Make bandpass filtration
-            if ((curFreq <= SPECTRUM_LOW) || (curFreq >= SPECTRUM_HIGH)) {
+            if ((curFreq <= options.getBandpassLow()) || (curFreq >= options.getBandpassHight())) {
                 //Empty noise
                 res[i] = new Complex(0);
-                res[size-i] = new Complex(0);
+                res[size - i] = new Complex(0);
             } else if (null != prev) {
                 double diffAngle = calcPhaseSubtraction(prev[i], res[i], curFreq);
                 double diffMagnitude = getMagnitudeSubtraction(prev[i], res[i], diffAngle);
                 curPhaseDiff += diffAngle;
                 curMagnitudeDiff += diffMagnitude;
-                
+
                 if (0.0D == curPhase) {
                     curPhase = calcPhase(res[i]);
                 }
             }
-            //Prepare CSV-row for debugging;
             //row += String.format("%.5f;", res[i].abs());
         }
         //row += "\n";
@@ -188,56 +161,52 @@ public class WavContainer {
         curPortion.setMagnitude(curMagnitudeDiff);
         curPortion.setPhase(curPhase);
         curPortion.setPhaseDiff(curPhaseDiff);
-         
+
         return res;
     }
-    
-    
-    
-    
+
     public void makeOutput() {
         long size = data.size();
-        double[] input = new double[WINDOW_SIZE];
-        int FIRST = WINDOW_SIZE/2 - WINDOW_STEP/2;
-        double freqStep = (double)sampleRate / (double)WINDOW_SIZE;
-        
-        Complex[] output = null;  
+        double[] input = new double[options.getWindowSize()];
+        int FIRST = options.getWindowSize() / 2 - options.getWindowStep() / 2;
+
+        Complex[] output = null;
         Complex[] fftData = null;
         double phase = 0.0D;
         double windowEnergy = 0.0D;
         double magnitude = 0.0D;
         double diffPhase = 0.0D;
-        
-        for(int index = 0; index < size; index += WINDOW_STEP) {
+
+        for (int index = 0; index < size; index += options.getWindowStep()) {
             System.out.print("index: " + Integer.toString(index) + "\n");
-            if (index + WINDOW_SIZE >= size) {
+            if (index + options.getWindowSize() >= size) {
                 break;
             }
-            for(int j = 0; j < WINDOW_SIZE; j++) {
+            for (int j = 0; j < options.getWindowSize(); j++) {
                 input[j] = data.get(index + j).getIn();
             }
-            
+
             HeartSoundPortion curPortion = data.get(index + FIRST);
             fftData = FourierProcessing(curPortion, input, fftData);
-                    
+
             magnitude = curPortion.getMagnitude();
             phase = curPortion.getPhase();
             diffPhase = curPortion.getPhaseDiff();
             windowEnergy = 0;
-            
+
             output = transformer.transform(fftData, TransformType.INVERSE);
-            for(int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
+            for (int j = FIRST; j < (FIRST + options.getWindowStep()); j++) {
                 HeartSoundPortion cur = data.get(index + j);
                 if (output[j].getReal() < 0) {
-                    cur.setOut(output[j].abs()*(-1.0));
+                    cur.setOut(output[j].abs() * (-1.0));
                 } else {
                     cur.setOut(output[j].abs());
                 }
                 windowEnergy += Math.pow(cur.getOut(), 2);
             }
-            
+
             //Set subband parameters
-            for(int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
+            for (int j = FIRST; j < (FIRST + options.getWindowStep()); j++) {
                 HeartSoundPortion cur = data.get(index + j);
                 cur.setWindowEnergy(windowEnergy);
                 cur.setMagnitude(magnitude);
@@ -251,27 +220,23 @@ public class WavContainer {
         System.out.println(mHisto.toString());
         System.out.println("Threshold: " + mHisto.getThreshold() + "\n");
     }
-    
-    
+
     private double getMagnitudeSubtraction(Complex prev, Complex cur, double angle) {
         double fEdge = prev.abs();
         double sEdge = cur.abs();
-        return Math.sqrt(Math.pow(fEdge, 2) + Math.pow(sEdge, 2) - 2*fEdge*sEdge*Math.cos(angle*Math.PI));
+        return Math.sqrt(Math.pow(fEdge, 2) + Math.pow(sEdge, 2) - 2 * fEdge * sEdge * Math.cos(angle * Math.PI));
     }
-    
-    
-    
+
     private double calcPhase(Complex cur) {
-        double arg = (Math.atan2(cur.getImaginary(), cur.getReal()) / Math.PI)*180.0;
+        double arg = (Math.atan2(cur.getImaginary(), cur.getReal()) / Math.PI) * 180.0;
         if (cur.getImaginary() < 0) {
             arg += 360.0;
         }
-        return arg/360.0;
+        return arg / 360.0;
     }
-    
-    
+
     private double calcPhaseSubtraction(Complex prev, Complex cur, double curFreq) {
-        double phaseOffset = ((double)WINDOW_STEP / (double)sampleRate)*curFreq;
+        double phaseOffset = ((double) options.getWindowStep() / (double) sampleRate) * curFreq;
         double res = calcPhase(cur) - calcPhase(prev) + phaseOffset;
         if (res < -0.5) {
             res += 1.0;
@@ -280,8 +245,7 @@ public class WavContainer {
         }
         return res;
     }
-    
-    
+
     private void updateExtremums(HeartSoundPortion curPortions) {
         if (curPortions.getMagnitude() > maxMagnitude) {
             maxMagnitude = curPortions.getMagnitude();
@@ -290,8 +254,7 @@ public class WavContainer {
             maxWindowEnergy = curPortions.getWindowEnergy();
         }
     }
-    
-    
+
     public void normalize() {
         for (HeartSoundPortion heartSoundPortion : data) {
             heartSoundPortion.setMagnitude(heartSoundPortion.getMagnitude() / maxMagnitude);
@@ -299,13 +262,11 @@ public class WavContainer {
             mHisto.push(heartSoundPortion.getMagnitude());
         }
     }
-    
-    
 
     public void s1s2Detection() {
         final Double THRESHOLD_MAGNITUDE = 0.2;
         final Double THRESHOLD_DURATION = 0.03;
-        
+
         //Детектируем основные тона
         sxDetection(false);
         //Фильтруем основные тона по длительности и энергии
@@ -315,10 +276,10 @@ public class WavContainer {
             //Если разница магнитуд зменьше порога - помечаем элемент на удаление
             boolean remove = (sxNode.getMaxMagnitude() < THRESHOLD_MAGNITUDE);
             //Если длительность тона ниже порога - помечаем элемент на удаления
-            remove |= (((double)sxNode.getDuration()/(double)sampleRate) < THRESHOLD_DURATION);
+            remove |= (((double) sxNode.getDuration() / (double) sampleRate) < THRESHOLD_DURATION);
             if (remove) { //Обнуляем маркер Sx для ложных срабатываний
-                for(long j = sxNode.getIndexBegin(); j < sxNode.getIndexSx(); j++) {
-                    HeartSoundPortion sp = data.get((int)j);
+                for (long j = sxNode.getIndexBegin(); j < sxNode.getIndexSx(); j++) {
+                    HeartSoundPortion sp = data.get((int) j);
                     sp.setSx(false);
                 }
                 nodes.remove(index);//Удаляем отфильтрованный элемент
@@ -331,7 +292,7 @@ public class WavContainer {
         //Собираем гистограммы по длительности и энергии
         MagnitudeHistogram magHist = new MagnitudeHistogram(16, 0.5D);
         MagnitudeHistogram durHist = new MagnitudeHistogram(16, 0.5D);
-        for(SxNode sxNode: nodes) {
+        for (SxNode sxNode : nodes) {
             magHist.push(sxNode.getMaxMagnitude());
             durHist.push(sxNode.getRelativeDuration());
         }
@@ -339,9 +300,9 @@ public class WavContainer {
         System.out.println("MAG threshold: " + magHist.getThreshold());
         System.out.println(durHist.toString("DUR"));
         System.out.println("DUR threshold: " + durHist.getThreshold());
-        
+
         //Классифицируем тона по порогам из гистограммы
-        for(SxNode sxNode: nodes) {
+        for (SxNode sxNode : nodes) {
             boolean S1 = false;
             boolean S2 = false;
             //Классифицируем тона по разнице магнитуд
@@ -353,17 +314,15 @@ public class WavContainer {
             //Классифицируем тона по относительной длительности
             S1 &= (sxNode.getRelativeDuration() > durHist.getThreshold());
             S2 &= (sxNode.getRelativeDuration() <= durHist.getThreshold());
-            for(long j = sxNode.getIndexBegin(); j < sxNode.getIndexSx(); j++) {
+            for (long j = sxNode.getIndexBegin(); j < sxNode.getIndexSx(); j++) {
                 //Маркируем отчеты исходного сигнала на принадлежность к S1 или S2
-                HeartSoundPortion sp = data.get((int)j);
+                HeartSoundPortion sp = data.get((int) j);
                 sp.setS1(S1);
                 sp.setS2(S2);
             }
         }
     }
-    
-    
-    
+
     //Функция получения массивы осных тонов из массива выходных данных
     public void sxDetection(boolean useOwnSx) {
         //Очищаем массив основных тонов
@@ -395,7 +354,7 @@ public class WavContainer {
             } else {//Если текущий отчет по-прежнему не оснвной
                 //Идет систола или диастола
             }
-            
+
             predSx = Sx;
             index++;
         }
