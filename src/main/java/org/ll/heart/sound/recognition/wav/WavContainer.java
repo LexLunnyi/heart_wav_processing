@@ -36,6 +36,9 @@ public class WavContainer {
     private final Options options;
     private final Date WAV_LIMIT_BEGIN;
     private final Date WAV_LIMIT_END;
+    private final WavFile wavFile;
+    private final int WINDOW_SIZE;
+    private final int WINDOW_STEP;
 
     private Double maxWindowEnergy = Double.MIN_VALUE;
     private Double maxMagnitude = Double.MIN_VALUE;
@@ -43,17 +46,18 @@ public class WavContainer {
     private Double maxValue = Double.MIN_VALUE;
     private Double minValue = Double.MAX_VALUE;
     private Double freqStep = 0.0D;
-    private long sampleRate = 0;
 
     public WavContainer(String fileName, Options options) throws IOException, Exception {
         this.fileName = fileName;
         this.options = options;
-        this.mHisto = new MagnitudeHistogram(options.getWindowSize(), HIST_THRES_MAGNITUDE);
         this.WAV_LIMIT_BEGIN = new Date(options.getWavLengthMin());
         this.WAV_LIMIT_END = new Date(options.getWavLengthMax());
+        this.WINDOW_SIZE = options.getWindowSize();
+        this.WINDOW_STEP = options.getWindowStep();
+        this.mHisto = new MagnitudeHistogram(WINDOW_SIZE, HIST_THRES_MAGNITUDE);
         long index = 0;
         // Open the wav file specified as the first argument
-        WavFile wavFile = WavFile.openWavFile(new File(fileName));
+        wavFile = WavFile.openWavFile(new File(fileName));
         // Display information about the wav file
         wavFile.display();
         // Get the number of audio channels in the wav file
@@ -61,14 +65,13 @@ public class WavContainer {
         if (numChannels > 1) {
             throw new Exception("Stereo records still not supported");
         }
-        sampleRate = wavFile.getSampleRate();
-        freqStep = (double) sampleRate / (double) options.getWindowSize();
+        freqStep = (double) wavFile.getSampleRate() / (double) WINDOW_SIZE;
         // Create a buffer of N frames
-        double[] buffer = new double[options.getWindowSize() * numChannels];
+        double[] buffer = new double[WINDOW_SIZE * numChannels];
         int framesRead;
         do {
             // Read frames into buffer
-            framesRead = wavFile.readFrames(buffer, options.getWindowSize());
+            framesRead = wavFile.readFrames(buffer, WINDOW_SIZE);
             // Loop through frames and look for minimum and maximum value
             for (int s = 0; s < framesRead * numChannels; s++) {
                 index++;
@@ -78,7 +81,7 @@ public class WavContainer {
                 if (buffer[s] < minValue) {
                     minValue = buffer[s];
                 }
-                Date ts = new Date((index * 1000) / sampleRate);
+                Date ts = new Date((index * 1000) / wavFile.getSampleRate());
                 if (options.isWavLengthLimited()) {
                     if (ts.compareTo(WAV_LIMIT_BEGIN) < 0) {
                         continue;
@@ -114,7 +117,7 @@ public class WavContainer {
                 //       heartSoundPortion.getIn(), heartSoundPortion.getOut(), heartSoundPortion.getMagnitude(), heartSoundPortion.getWindowEnergy());
                 //String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%s\n", 
                 //                             heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
-                String row = String.format("%.5f;%.5f;%.5f;%s\n", (double) index / (double) sampleRate,
+                String row = String.format("%.5f;%.5f;%.5f;%s\n", (double) index / (double) wavFile.getSampleRate(),
                         heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
                 fileWriter.write(row);
                 index++;
@@ -167,8 +170,8 @@ public class WavContainer {
 
     public void makeOutput() {
         long size = data.size();
-        double[] input = new double[options.getWindowSize()];
-        int FIRST = options.getWindowSize() / 2 - options.getWindowStep() / 2;
+        double[] input = new double[WINDOW_SIZE];
+        int FIRST = WINDOW_SIZE / 2 - WINDOW_STEP / 2;
 
         Complex[] output = null;
         Complex[] fftData = null;
@@ -177,12 +180,12 @@ public class WavContainer {
         double magnitude = 0.0D;
         double diffPhase = 0.0D;
 
-        for (int index = 0; index < size; index += options.getWindowStep()) {
+        for (int index = 0; index < size; index += WINDOW_STEP) {
             System.out.print("index: " + Integer.toString(index) + "\n");
-            if (index + options.getWindowSize() >= size) {
+            if (index + WINDOW_SIZE >= size) {
                 break;
             }
-            for (int j = 0; j < options.getWindowSize(); j++) {
+            for (int j = 0; j < WINDOW_SIZE; j++) {
                 input[j] = data.get(index + j).getIn();
             }
 
@@ -195,7 +198,7 @@ public class WavContainer {
             windowEnergy = 0;
 
             output = transformer.transform(fftData, TransformType.INVERSE);
-            for (int j = FIRST; j < (FIRST + options.getWindowStep()); j++) {
+            for (int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
                 HeartSoundPortion cur = data.get(index + j);
                 if (output[j].getReal() < 0) {
                     cur.setOut(output[j].abs() * (-1.0));
@@ -206,7 +209,7 @@ public class WavContainer {
             }
 
             //Set subband parameters
-            for (int j = FIRST; j < (FIRST + options.getWindowStep()); j++) {
+            for (int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
                 HeartSoundPortion cur = data.get(index + j);
                 cur.setWindowEnergy(windowEnergy);
                 cur.setMagnitude(magnitude);
@@ -236,7 +239,7 @@ public class WavContainer {
     }
 
     private double calcPhaseSubtraction(Complex prev, Complex cur, double curFreq) {
-        double phaseOffset = ((double) options.getWindowStep() / (double) sampleRate) * curFreq;
+        double phaseOffset = ((double) WINDOW_STEP / (double) wavFile.getSampleRate()) * curFreq;
         double res = calcPhase(cur) - calcPhase(prev) + phaseOffset;
         if (res < -0.5) {
             res += 1.0;
@@ -276,7 +279,7 @@ public class WavContainer {
             //Если разница магнитуд зменьше порога - помечаем элемент на удаление
             boolean remove = (sxNode.getMaxMagnitude() < THRESHOLD_MAGNITUDE);
             //Если длительность тона ниже порога - помечаем элемент на удаления
-            remove |= (((double) sxNode.getDuration() / (double) sampleRate) < THRESHOLD_DURATION);
+            remove |= (((double) sxNode.getDuration() / (double) wavFile.getSampleRate()) < THRESHOLD_DURATION);
             if (remove) { //Обнуляем маркер Sx для ложных срабатываний
                 for (long j = sxNode.getIndexBegin(); j < sxNode.getIndexSx(); j++) {
                     HeartSoundPortion sp = data.get((int) j);
@@ -358,5 +361,17 @@ public class WavContainer {
             predSx = Sx;
             index++;
         }
+    }
+
+    public WavFile getWavFile() {
+        return wavFile;
+    }
+
+    public int getWindowSize() {
+        return WINDOW_SIZE;
+    }
+
+    public int getWindowStep() {
+        return WINDOW_STEP;
     }
 }
