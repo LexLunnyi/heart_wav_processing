@@ -15,6 +15,8 @@ import java.util.Properties;
 public class Options {
     int windowSize;
     int windowStep;
+    boolean windowAuto;
+    int windowFrequencyRate;
     double bandpassLow;
     double bandpassHight;
     String inputDir;
@@ -34,6 +36,8 @@ public class Options {
             // get the property value and print it out
             windowSize = Integer.parseInt(prop.getProperty("window.size"));
             windowStep = Integer.parseInt(prop.getProperty("window.step"));
+            windowAuto = Boolean.parseBoolean(prop.getProperty("window.auto"));
+            windowFrequencyRate = Integer.parseInt(prop.getProperty("window.frequency.rate"));
             bandpassLow = Double.parseDouble(prop.getProperty("bandpass.low"));
             bandpassHight = Double.parseDouble(prop.getProperty("bandpass.hight"));
             inputDir = prop.getProperty("data.input.dir");
@@ -52,13 +56,13 @@ public class Options {
 
             printProperties();
         } catch (IOException ex) {
-            System.out.print("Error read options: " + ex);
+            System.out.println("Error read options: " + ex);
         } finally {
             if (input != null) {
                 try {
                     input.close();
                 } catch (IOException e) {
-                    System.out.print("Error close config-file: " + e);
+                    System.out.println("Error close config-file: " + e);
                 }
             }
         }
@@ -67,30 +71,32 @@ public class Options {
 
 
     private void printProperties() {
-        System.out.print("-------------------------------------------------------\n");
-        System.out.print("OPTIONS: \n");
-        System.out.print("  windowSize -> " + Integer.toString(windowSize) + "\n");
-        System.out.print("  windowStep -> " + Integer.toString(windowStep) + "\n");
-        System.out.print("  \n");
-        System.out.print("  bandpassLow -> " + Double.toString(bandpassLow) + "\n");
-        System.out.print("  bandpassHight -> " + Double.toString(bandpassHight) + "\n");
-        System.out.print("  \n");
-        System.out.print("  inputDir -> " + inputDir + "\n");
-        System.out.print("  outputDir -> " + outputDir + "\n");
-        System.out.print("  \n");
-        System.out.print("  wavLengthLimited -> " + Boolean.toString(wavLengthLimited) + "\n");
-        System.out.print("  wavLengthMin -> " + Integer.toString(wavLengthMin) + "\n");
-        System.out.print("  wavLengthMax -> " + Integer.toString(wavLengthMax) + "\n");
-        System.out.print("  \n");
+        System.out.println("-------------------------------------------------------");
+        System.out.println("OPTIONS: ");
+        System.out.println("  windowSize -> " + Integer.toString(windowSize));
+        System.out.println("  windowStep -> " + Integer.toString(windowStep));
+        System.out.println("  windowAuto -> " + Boolean.toString(windowAuto));
+        System.out.println("  windowFrequencyRate -> " + Integer.toString(windowFrequencyRate));
+        System.out.println("  ");
+        System.out.println("  bandpassLow -> " + Double.toString(bandpassLow));
+        System.out.println("  bandpassHight -> " + Double.toString(bandpassHight));
+        System.out.println("  ");
+        System.out.println("  inputDir -> " + inputDir);
+        System.out.println("  outputDir -> " + outputDir);
+        System.out.println("  ");
+        System.out.println("  wavLengthLimited -> " + Boolean.toString(wavLengthLimited));
+        System.out.println("  wavLengthMin -> " + Integer.toString(wavLengthMin));
+        System.out.println("  wavLengthMax -> " + Integer.toString(wavLengthMax));
+        System.out.println("  ");
         int index = 1;
         for(HeartSoundCategory cat: categories) {
-            System.out.print("  name " + index + " -> " + cat.getName() + "\n");
-            System.out.print("  path " + index + " -> " + cat.getPath() + "\n");
-            System.out.print("  tag " + index + " -> " + cat.getTag() + "\n");
-            System.out.print("  \n");
+            System.out.println("  name " + index + " -> " + cat.getName());
+            System.out.println("  path " + index + " -> " + cat.getPath());
+            System.out.println("  tag " + index + " -> " + cat.getTag());
+            System.out.println("  ");
             index++;
         }
-        System.out.print("-------------------------------------------------------\n");
+        System.out.println("-------------------------------------------------------");
     }
 
     public int getWindowSize() {
@@ -131,5 +137,13 @@ public class Options {
 
     public List<HeartSoundCategory> getCategories() {
         return categories;
+    }
+
+    public boolean isWindowAuto() {
+        return windowAuto;
+    }
+
+    public int getWindowFrequencyRate() {
+        return windowFrequencyRate;
     }
 }

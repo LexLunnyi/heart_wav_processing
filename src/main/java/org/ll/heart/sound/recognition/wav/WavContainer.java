@@ -15,6 +15,7 @@ import org.ll.heart.sound.recognition.HeartSoundPortion;
 import org.ll.heart.sound.recognition.MagnitudeHistogram;
 import org.ll.heart.sound.recognition.Options;
 import org.ll.heart.sound.recognition.SxNode;
+import org.ll.heart.sound.recognition.WindowParams;
 
 /**
  *
@@ -52,9 +53,8 @@ public class WavContainer {
         this.options = options;
         this.WAV_LIMIT_BEGIN = new Date(options.getWavLengthMin());
         this.WAV_LIMIT_END = new Date(options.getWavLengthMax());
-        this.WINDOW_SIZE = options.getWindowSize();
-        this.WINDOW_STEP = options.getWindowStep();
-        this.mHisto = new MagnitudeHistogram(WINDOW_SIZE, HIST_THRES_MAGNITUDE);
+
+        
         long index = 0;
         // Open the wav file specified as the first argument
         wavFile = WavFile.openWavFile(new File(fileName));
@@ -65,6 +65,16 @@ public class WavContainer {
         if (numChannels > 1) {
             throw new Exception("Stereo records still not supported");
         }
+        //Get window size and step
+        if (options.isWindowAuto()) {
+            WindowParams autoParams = new WindowParams(options.getWindowFrequencyRate(), (int)wavFile.getSampleRate());
+            this.WINDOW_SIZE = autoParams.getSize();
+            this.WINDOW_STEP = autoParams.getStep();
+        } else {
+            this.WINDOW_SIZE = options.getWindowSize();
+            this.WINDOW_STEP = options.getWindowStep();
+        }
+        this.mHisto = new MagnitudeHistogram(WINDOW_SIZE, HIST_THRES_MAGNITUDE);
         freqStep = (double) wavFile.getSampleRate() / (double) WINDOW_SIZE;
         // Create a buffer of N frames
         double[] buffer = new double[WINDOW_SIZE * numChannels];
@@ -181,7 +191,7 @@ public class WavContainer {
         double diffPhase = 0.0D;
 
         for (int index = 0; index < size; index += WINDOW_STEP) {
-            System.out.print("index: " + Integer.toString(index) + "\n");
+            //System.out.print("index: " + Integer.toString(index) + "\n");
             if (index + WINDOW_SIZE >= size) {
                 break;
             }
