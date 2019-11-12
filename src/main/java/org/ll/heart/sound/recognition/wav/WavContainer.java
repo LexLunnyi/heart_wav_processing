@@ -384,4 +384,8 @@ public class WavContainer {
     public int getWindowStep() {
         return WINDOW_STEP;
     }
+
+    public Double getFreqStep() {
+        return freqStep;
+    }
 }
