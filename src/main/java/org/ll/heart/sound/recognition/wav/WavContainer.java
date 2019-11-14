@@ -146,9 +146,8 @@ public class WavContainer {
     private Complex[] FourierProcessing(HeartSoundPortion curPortion, double[] input, Complex[] prev) {
         Complex[] res = transformer.transform(input, TransformType.FORWARD);
         int size = res.length;
-        double curMagnitudeDiff = 0.0D;
-        double curPhase = 0.0D;
-        double curPhaseDiff = 0.0D;
+        Complex tmp = new Complex(0, 0);
+        
         //String row = tsFormat.format(curPortion.getTs()) + ";";
         for (int i = 1; i < size / 2; i++) {
             double curFreq = i * freqStep;
@@ -158,22 +157,16 @@ public class WavContainer {
                 res[i] = new Complex(0);
                 res[size - i] = new Complex(0);
             } else if (null != prev) {
-                double diffAngle = calcPhaseSubtraction(prev[i], res[i], curFreq);
-                double diffMagnitude = getMagnitudeSubtraction(prev[i], res[i], diffAngle);
-                curPhaseDiff += diffAngle;
-                curMagnitudeDiff += diffMagnitude;
-
-                if (0.0D == curPhase) {
-                    curPhase = calcPhase(res[i]);
-                }
+                Complex diff = prev[i].subtract(res[i]);
+                tmp = tmp.add(diff);
             }
             //row += String.format("%.5f;", res[i].abs());
         }
         //row += "\n";
         //spectrogram.add(row);
-        curPortion.setMagnitude(curMagnitudeDiff);
-        curPortion.setPhase(curPhase);
-        curPortion.setPhaseDiff(curPhaseDiff);
+        curPortion.setMagnitude(tmp.abs());
+        curPortion.setPhase(0.0);//FIXME currently not needed
+        curPortion.setPhaseDiff(tmp.getArgument());
 
         return res;
     }
