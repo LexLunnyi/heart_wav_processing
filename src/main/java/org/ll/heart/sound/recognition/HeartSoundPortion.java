@@ -46,7 +46,6 @@ public class HeartSoundPortion {
     private Double out;
     private Double magnitude;
     private Double phase;
-    private Double phaseDiff;
     private Double windowEnergy;
     private Double maxHarmonic;
     private Double squareSemiWave;
@@ -70,7 +69,6 @@ public class HeartSoundPortion {
         this.out = 0.0D;
         this.magnitude = 0.0D;
         this.phase = 0.0D;
-        this.phaseDiff = 0.0D;
         this.windowEnergy = 0.0D;
         this.maxHarmonic = 0.0D;
         this.squareSemiWave = 0.0D;
@@ -117,15 +115,7 @@ public class HeartSoundPortion {
     public void setPhase(Double phase) {
         this.phase = phase;
     }
-
-    public Double getPhaseDiff() {
-        return phaseDiff;
-    }
-
-    public void setPhaseDiff(Double phaseDiff) {
-        this.phaseDiff = phaseDiff;
-    }
-
+    
     public Double getWindowEnergy() {
         return windowEnergy;
     }

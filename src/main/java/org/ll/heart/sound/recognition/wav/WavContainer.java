@@ -147,6 +147,7 @@ public class WavContainer {
         Complex tmp = new Complex(0, 0);
         double maxHarmonic = 0.0D;
         int maxHormonicIndex = 0;
+        double windowEnergy = 0.0D;
         
         //String row = tsFormat.format(curPortion.getTs()) + ";";
         for (int i = 1; i < size / 2; i++) {
@@ -163,6 +164,7 @@ public class WavContainer {
                 }
                 Complex diff = prev[i].subtract(res[i]);
                 tmp = tmp.add(diff);
+                windowEnergy += res[i].abs();
             }
             //row += String.format("%.5f;", res[i].abs());
         }
@@ -170,8 +172,9 @@ public class WavContainer {
         //spectrogram.add(row);
         curPortion.setMagnitude(tmp.abs());
         curPortion.setPhase(0.0);//FIXME currently not needed
-        curPortion.setPhaseDiff(tmp.getArgument());
+        curPortion.setMagnitudesAngle(tmp.getArgument());
         curPortion.setMaxHarmonic(2.0 * (double)maxHormonicIndex / (double)size);
+        curPortion.setWindowEnergy(windowEnergy);
 
         return res;
     }
@@ -203,8 +206,8 @@ public class WavContainer {
 
             magnitude = curPortion.getMagnitude();
             phase = curPortion.getPhase();
-            diffPhase = curPortion.getPhaseDiff();
-            windowEnergy = 0;
+            diffPhase = curPortion.getMagnitudesAngle();
+            windowEnergy = curPortion.getWindowEnergy();
             harmonicIndex = curPortion.getMaxHarmonic();
 
             //Set subband parameters
@@ -213,7 +216,7 @@ public class WavContainer {
                 cur.setWindowEnergy(windowEnergy);
                 cur.setMagnitude(magnitude);
                 cur.setPhase(phase);
-                cur.setPhaseDiff(diffPhase);
+                cur.setMagnitudesAngle(diffPhase);
                 cur.setMaxHarmonic(harmonicIndex);
             }
             updateExtremums(curPortion);
