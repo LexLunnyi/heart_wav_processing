@@ -17,6 +17,7 @@ import org.ll.heart.sound.recognition.Options;
 import org.ll.heart.sound.recognition.SxNode;
 import org.ll.heart.sound.recognition.WindowParams;
 
+
 /**
  *
  * @author aberdnikov
@@ -43,7 +44,9 @@ public class WavContainer {
 
     private Double maxWindowEnergy = Double.MIN_VALUE;
     private Double maxMagnitude = Double.MIN_VALUE;
-
+    private Double maxHarmonicIndex = Double.MIN_VALUE;
+    private Double maxSemiWave = Double.MIN_VALUE;
+    
     private Double maxValue = Double.MIN_VALUE;
     private Double minValue = Double.MAX_VALUE;
     private Double freqStep = 0.0D;
@@ -118,19 +121,14 @@ public class WavContainer {
 
     public void saveCSV(String fileName) throws IOException {
         try (FileWriter fileWriter = new FileWriter(fileName)) {
-            long index = 0;
             for (HeartSoundPortion heartSoundPortion : data) {
-                String Svals = (heartSoundPortion.isSx()) ? "1;" : "0;";
-                Svals += (heartSoundPortion.isS1()) ? "1;" : "0;";
-                Svals += (heartSoundPortion.isS2()) ? "1;" : "0;";
-                //String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%.5f;%.5f;\n", 
-                //       heartSoundPortion.getIn(), heartSoundPortion.getOut(), heartSoundPortion.getMagnitude(), heartSoundPortion.getWindowEnergy());
-                //String row = tsFormat.format(heartSoundPortion.getTs()) + String.format(";%.5f;%.5f;%s\n", 
-                //                             heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
-                String row = String.format("%.5f;%.5f;%.5f;%s\n", (double) index / (double) wavFile.getSampleRate(),
-                        heartSoundPortion.getIn(), heartSoundPortion.getMagnitude(), Svals);
+                Double[] all = heartSoundPortion.getColumns();
+                String row = "";
+                for(int j = 0; j < heartSoundPortion.columnsCnt(); j++) {
+                    row += Double.toString(all[j]) + ";";
+                }
+                row += "\n";
                 fileWriter.write(row);
-                index++;
             }
         }
     }
@@ -147,6 +145,8 @@ public class WavContainer {
         Complex[] res = transformer.transform(input, TransformType.FORWARD);
         int size = res.length;
         Complex tmp = new Complex(0, 0);
+        double maxHarmonic = 0.0D;
+        int maxHormonicIndex = 0;
         
         //String row = tsFormat.format(curPortion.getTs()) + ";";
         for (int i = 1; i < size / 2; i++) {
@@ -157,6 +157,10 @@ public class WavContainer {
                 res[i] = new Complex(0);
                 res[size - i] = new Complex(0);
             } else if (null != prev) {
+                if (res[i].abs() > maxHarmonic) {
+                    maxHarmonic = res[i].abs();
+                    maxHormonicIndex = i;
+                }
                 Complex diff = prev[i].subtract(res[i]);
                 tmp = tmp.add(diff);
             }
@@ -167,6 +171,7 @@ public class WavContainer {
         curPortion.setMagnitude(tmp.abs());
         curPortion.setPhase(0.0);//FIXME currently not needed
         curPortion.setPhaseDiff(tmp.getArgument());
+        curPortion.setMaxHarmonic(2.0 * (double)maxHormonicIndex / (double)size);
 
         return res;
     }
@@ -182,6 +187,7 @@ public class WavContainer {
         double windowEnergy = 0.0D;
         double magnitude = 0.0D;
         double diffPhase = 0.0D;
+        double harmonicIndex = 0.0D;
 
         for (int index = 0; index < size; index += WINDOW_STEP) {
             //System.out.print("index: " + Integer.toString(index) + "\n");
@@ -199,17 +205,7 @@ public class WavContainer {
             phase = curPortion.getPhase();
             diffPhase = curPortion.getPhaseDiff();
             windowEnergy = 0;
-
-            output = transformer.transform(fftData, TransformType.INVERSE);
-            for (int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
-                HeartSoundPortion cur = data.get(index + j);
-                if (output[j].getReal() < 0) {
-                    cur.setOut(output[j].abs() * (-1.0));
-                } else {
-                    cur.setOut(output[j].abs());
-                }
-                windowEnergy += Math.pow(cur.getOut(), 2);
-            }
+            harmonicIndex = curPortion.getMaxHarmonic();
 
             //Set subband parameters
             for (int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
@@ -218,14 +214,54 @@ public class WavContainer {
                 cur.setMagnitude(magnitude);
                 cur.setPhase(phase);
                 cur.setPhaseDiff(diffPhase);
+                cur.setMaxHarmonic(harmonicIndex);
             }
             updateExtremums(curPortion);
         }
+        
+        calcSemiWaveSquare();
         normalize();
         s1s2Detection();
         System.out.println(mHisto.toString());
         System.out.println("Threshold: " + mHisto.getThreshold() + "\n");
     }
+    
+    
+    private void calcSemiWaveSquare() {
+        double semiWaveSquare = 0.0D;
+        double prevIn = 0.0D;
+        double in = 0.0D;
+        
+        for (HeartSoundPortion cur : data) {
+            in = cur.getIn();
+            boolean newSemiWave = ((prevIn * in < 0.0D) || ((prevIn != 0.0D) && (in == 0.0D)));
+            if (newSemiWave) {
+                cur.setSquareSemiWave(semiWaveSquare);
+                semiWaveSquare = 0.0D;
+            } else {
+                semiWaveSquare += Math.abs(in);
+                cur.setSquareSemiWave(Double.MIN_VALUE);
+            }
+            prevIn = in;
+        }
+        semiWaveSquare += Math.abs(in);
+        maxSemiWave = semiWaveSquare;
+        for (int i = data.size()-1; i >= 0; i--) {
+            HeartSoundPortion cur = data.get(i);
+            double semiWave = cur.getSquareSemiWave();
+            
+            if (semiWave == Double.MIN_VALUE) {
+                cur.setSquareSemiWave(semiWaveSquare);
+            } else {
+                semiWaveSquare = semiWave;
+            }
+            
+            if (semiWave > maxSemiWave) {
+                maxSemiWave = semiWave;
+            }
+        }
+    }
+    
 
     private double getMagnitudeSubtraction(Complex prev, Complex cur, double angle) {
         double fEdge = prev.abs();
@@ -259,12 +295,17 @@ public class WavContainer {
         if (curPortions.getWindowEnergy() > maxWindowEnergy) {
             maxWindowEnergy = curPortions.getWindowEnergy();
         }
+        if (curPortions.getMaxHarmonic() > maxHarmonicIndex) {
+            maxHarmonicIndex = curPortions.getMaxHarmonic();
+        }
     }
 
     public void normalize() {
         for (HeartSoundPortion heartSoundPortion : data) {
             heartSoundPortion.setMagnitude(heartSoundPortion.getMagnitude() / maxMagnitude);
             heartSoundPortion.setWindowEnergy(heartSoundPortion.getWindowEnergy() / maxWindowEnergy);
+            heartSoundPortion.setMaxHarmonic(heartSoundPortion.getMaxHarmonic() / maxHarmonicIndex);
+            heartSoundPortion.setSquareSemiWave(heartSoundPortion.getSquareSemiWave() / maxSemiWave);
             mHisto.push(heartSoundPortion.getMagnitude());
         }
     }
@@ -280,7 +321,8 @@ public class WavContainer {
         while (nodes.size() > index) {
             SxNode sxNode = nodes.get(index); //Получаем элемент из массива
             //Если разница магнитуд зменьше порога - помечаем элемент на удаление
-            boolean remove = (sxNode.getMaxMagnitude() < THRESHOLD_MAGNITUDE);
+            //boolean remove = (sxNode.getMaxMagnitude() < THRESHOLD_MAGNITUDE);
+            boolean remove = false;
             //Если длительность тона ниже порога - помечаем элемент на удаления
             remove |= (((double) sxNode.getDuration() / (double) wavFile.getSampleRate()) < THRESHOLD_DURATION);
             if (remove) { //Обнуляем маркер Sx для ложных срабатываний
@@ -293,6 +335,7 @@ public class WavContainer {
                 index++;
             }
         }
+
         sxDetection(true);
         System.out.println("Nodes size: " + nodes.size() + "\n");
         //Собираем гистограммы по длительности и энергии
