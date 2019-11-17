@@ -46,10 +46,12 @@ public class WavContainer {
     private Double maxMagnitude = Double.MIN_VALUE;
     private Double maxHarmonicIndex = Double.MIN_VALUE;
     private Double maxSemiWave = Double.MIN_VALUE;
+    private Double maxFirstDerivative = Double.MIN_VALUE;
+    private Double maxSecondDerivative = Double.MIN_VALUE;
     
     private Double maxValue = Double.MIN_VALUE;
     private Double minValue = Double.MAX_VALUE;
-    private Double freqStep = 0.0D;
+    private Double freqStep = Double.MIN_VALUE;
 
     public WavContainer(String fileName, Options options) throws IOException, Exception {
         this.fileName = fileName;
@@ -145,9 +147,9 @@ public class WavContainer {
         Complex[] res = transformer.transform(input, TransformType.FORWARD);
         int size = res.length;
         Complex tmp = new Complex(0, 0);
-        double maxHarmonic = 0.0D;
+        double maxHarmonic = Double.MIN_VALUE;
         int maxHormonicIndex = 0;
-        double windowEnergy = 0.0D;
+        double windowEnergy = Double.MIN_VALUE;
         
         //String row = tsFormat.format(curPortion.getTs()) + ";";
         for (int i = 1; i < size / 2; i++) {
@@ -173,7 +175,7 @@ public class WavContainer {
         curPortion.setMagnitude(tmp.abs());
         curPortion.setPhase(0.0);//FIXME currently not needed
         curPortion.setMagnitudesAngle(tmp.getArgument());
-        curPortion.setMaxHarmonic(2.0 * (double)maxHormonicIndex / (double)size);
+        curPortion.setHarmonicIndex(2.0 * (double)maxHormonicIndex / (double)size);
         curPortion.setWindowEnergy(windowEnergy);
 
         return res;
@@ -186,11 +188,12 @@ public class WavContainer {
 
         Complex[] output = null;
         Complex[] fftData = null;
-        double phase = 0.0D;
-        double windowEnergy = 0.0D;
-        double magnitude = 0.0D;
-        double diffPhase = 0.0D;
-        double harmonicIndex = 0.0D;
+        double phase = Double.MIN_VALUE;
+        double windowEnergy = Double.MIN_VALUE;
+        double magnitude = Double.MIN_VALUE;
+        double diffPhase = Double.MIN_VALUE;
+        double harmonicIndex = Double.MIN_VALUE;
+        HeartSoundPortion.init();
 
         for (int index = 0; index < size; index += WINDOW_STEP) {
             //System.out.print("index: " + Integer.toString(index) + "\n");
@@ -208,7 +211,7 @@ public class WavContainer {
             phase = curPortion.getPhase();
             diffPhase = curPortion.getMagnitudesAngle();
             windowEnergy = curPortion.getWindowEnergy();
-            harmonicIndex = curPortion.getMaxHarmonic();
+            harmonicIndex = curPortion.getHarmonicIndex();
 
             //Set subband parameters
             for (int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
@@ -217,9 +220,8 @@ public class WavContainer {
                 cur.setMagnitude(magnitude);
                 cur.setPhase(phase);
                 cur.setMagnitudesAngle(diffPhase);
-                cur.setMaxHarmonic(harmonicIndex);
+                cur.setHarmonicIndex(harmonicIndex);
             }
-            updateExtremums(curPortion);
         }
         
         calcSemiWaveSquare();
@@ -231,24 +233,36 @@ public class WavContainer {
     
     
     private void calcSemiWaveSquare() {
-        double semiWaveSquare = 0.0D;
-        double prevIn = 0.0D;
-        double in = 0.0D;
+        double semiWaveSquare = Double.MIN_VALUE;
+        double prevIn = Double.MIN_VALUE;
+        double in = Double.MIN_VALUE;
+        double firstDer = Double.MIN_VALUE;
+        double prevFirstDer = Double.MIN_VALUE;
         
         for (HeartSoundPortion cur : data) {
             in = cur.getIn();
-            boolean newSemiWave = ((prevIn * in < 0.0D) || ((prevIn != 0.0D) && (in == 0.0D)));
+            firstDer = in - prevIn;
+            double secondDer = firstDer - prevFirstDer;
+            
+            cur.setFirstDerivative(firstDer);
+            maxFirstDerivative = (cur.getFirstDerivative() > maxFirstDerivative) ? cur.getFirstDerivative() : maxFirstDerivative;
+            
+            cur.setSecondDerivative(secondDer);
+            maxSecondDerivative = (cur.getSecondDerivative() > maxSecondDerivative) ? cur.getSecondDerivative() : maxSecondDerivative;
+            
+            boolean newSemiWave = ((prevIn * in < Double.MIN_VALUE) || ((prevIn != Double.MIN_VALUE) && (in == Double.MIN_VALUE)));
             if (newSemiWave) {
                 cur.setSquareSemiWave(semiWaveSquare);
-                semiWaveSquare = 0.0D;
+                semiWaveSquare = Double.MIN_VALUE;
             } else {
                 semiWaveSquare += Math.abs(in);
                 cur.setSquareSemiWave(Double.MIN_VALUE);
             }
             prevIn = in;
+            prevFirstDer = firstDer;
         }
+        
         semiWaveSquare += Math.abs(in);
-        maxSemiWave = semiWaveSquare;
         for (int i = data.size()-1; i >= 0; i--) {
             HeartSoundPortion cur = data.get(i);
             double semiWave = cur.getSquareSemiWave();
@@ -257,10 +271,6 @@ public class WavContainer {
                 cur.setSquareSemiWave(semiWaveSquare);
             } else {
                 semiWaveSquare = semiWave;
-            }
-            
-            if (semiWave > maxSemiWave) {
-                maxSemiWave = semiWave;
             }
         }
     }
@@ -291,28 +301,15 @@ public class WavContainer {
         return res;
     }
 
-    private void updateExtremums(HeartSoundPortion curPortions) {
-        if (curPortions.getMagnitude() > maxMagnitude) {
-            maxMagnitude = curPortions.getMagnitude();
-        }
-        if (curPortions.getWindowEnergy() > maxWindowEnergy) {
-            maxWindowEnergy = curPortions.getWindowEnergy();
-        }
-        if (curPortions.getMaxHarmonic() > maxHarmonicIndex) {
-            maxHarmonicIndex = curPortions.getMaxHarmonic();
-        }
-    }
 
     public void normalize() {
         for (HeartSoundPortion heartSoundPortion : data) {
-            heartSoundPortion.setMagnitude(heartSoundPortion.getMagnitude() / maxMagnitude);
-            heartSoundPortion.setWindowEnergy(heartSoundPortion.getWindowEnergy() / maxWindowEnergy);
-            heartSoundPortion.setMaxHarmonic(heartSoundPortion.getMaxHarmonic() / maxHarmonicIndex);
-            heartSoundPortion.setSquareSemiWave(heartSoundPortion.getSquareSemiWave() / maxSemiWave);
+            heartSoundPortion.normalize();
             mHisto.push(heartSoundPortion.getMagnitude());
         }
     }
 
+    
     public void s1s2Detection() {
         final Double THRESHOLD_MAGNITUDE = 0.2;
         final Double THRESHOLD_DURATION = 0.03;

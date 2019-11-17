@@ -16,7 +16,7 @@ enum WavColumn {
     SIGNAL(1),
     MAGNITUDE(2),
     SX(3),
-    MAX_HARMONIC_INDEX(4),
+    HARMONIC_INDEX(4),
     SQUARE_SEMI_WAVE(5),
     WINDOWS_ENERGY(6),
     TIME_FROM_CHANGE_POINT(7),
@@ -47,7 +47,7 @@ public class HeartSoundPortion {
     private Double magnitude;
     private Double phase;
     private Double windowEnergy;
-    private Double maxHarmonic;
+    private Double harmonicIndex;
     private Double squareSemiWave;
     private Double timeFromChangeDirPoint;
     private Double timeFromInflectionPoint;
@@ -59,6 +59,15 @@ public class HeartSoundPortion {
     private boolean Sx;
     private boolean S1;
     private boolean S2;
+    private boolean changerDirectionPoint;
+    private boolean inflectionPoint;
+    
+    static private double maxWindowEnergy = Double.MIN_VALUE;
+    static private double maxMagnitude = Double.MIN_VALUE;
+    static private double maxHarmonicIndex = Double.MIN_VALUE;
+    static private double maxSquareSemiWave = Double.MIN_VALUE;
+    static private double maxFirstDerivative = Double.MIN_VALUE;
+    static private double maxSecondDerivative = Double.MIN_VALUE;
     
     
     private final List<HeartSoundSpectrumPortion> spectrum = new ArrayList<>();
@@ -66,22 +75,31 @@ public class HeartSoundPortion {
     public HeartSoundPortion(Date ts, Double in) {
         this.ts = ts;
         this.in = in;
-        this.out = 0.0D;
-        this.magnitude = 0.0D;
-        this.phase = 0.0D;
-        this.windowEnergy = 0.0D;
-        this.maxHarmonic = 0.0D;
-        this.squareSemiWave = 0.0D;
-        this.timeFromChangeDirPoint = 0.0D;
-        this.timeFromInflectionPoint = 0.0D;
-        this.magnitudesAngle = 0.0D;
-        this.firstDerivative = 0.0D;
-        this.secondDerivative = 0.0D;
-        this.windowChangeDirPointsCnt = 0.0D;
-        this.windowInflectionPointsCnt = 0.0D;
+        this.out = Double.MIN_VALUE;
+        this.magnitude = Double.MIN_VALUE;
+        this.phase = Double.MIN_VALUE;
+        this.windowEnergy = Double.MIN_VALUE;
+        this.harmonicIndex = Double.MIN_VALUE;
+        this.squareSemiWave = Double.MIN_VALUE;
+        this.timeFromChangeDirPoint = Double.MIN_VALUE;
+        this.timeFromInflectionPoint = Double.MIN_VALUE;
+        this.magnitudesAngle = Double.MIN_VALUE;
+        this.firstDerivative = Double.MIN_VALUE;
+        this.secondDerivative = Double.MIN_VALUE;
+        this.windowChangeDirPointsCnt = Double.MIN_VALUE;
+        this.windowInflectionPointsCnt = Double.MIN_VALUE;
         this.Sx = false;
         this.S1 = false;
         this.S2 = false;
+    }
+    
+    static public void init() {
+        maxWindowEnergy = Double.MIN_VALUE;
+        maxMagnitude = Double.MIN_VALUE;
+        maxHarmonicIndex = Double.MIN_VALUE;
+        maxSquareSemiWave = Double.MIN_VALUE;
+        maxFirstDerivative = Double.MIN_VALUE;
+        maxSecondDerivative = Double.MIN_VALUE; 
     }
 
     public Date getTs() {
@@ -106,6 +124,9 @@ public class HeartSoundPortion {
 
     public void setMagnitude(Double magnitude) {
         this.magnitude = magnitude;
+        if (magnitude > maxMagnitude) {
+            maxMagnitude = magnitude;
+        }
     }
 
     public Double getPhase() {
@@ -122,6 +143,9 @@ public class HeartSoundPortion {
 
     public void setWindowEnergy(Double windowEnergy) {
         this.windowEnergy = windowEnergy;
+        if (windowEnergy > maxWindowEnergy) {
+            maxWindowEnergy = windowEnergy;
+        }
     }
     
     public List<HeartSoundSpectrumPortion> getSpectrum() {
@@ -152,12 +176,15 @@ public class HeartSoundPortion {
         this.S2 = S2;
     }
 
-    public Double getMaxHarmonic() {
-        return maxHarmonic;
+    public Double getHarmonicIndex() {
+        return harmonicIndex;
     }
 
-    public void setMaxHarmonic(Double maxHarmonic) {
-        this.maxHarmonic = maxHarmonic;
+    public void setHarmonicIndex(Double harmonicIndex) {
+        this.harmonicIndex = harmonicIndex;
+        if (harmonicIndex > maxHarmonicIndex) {
+            maxHarmonicIndex = harmonicIndex;
+        }
     }
 
     public Double getSquareSemiWave() {
@@ -166,6 +193,9 @@ public class HeartSoundPortion {
 
     public void setSquareSemiWave(Double squareSemiWave) {
         this.squareSemiWave = squareSemiWave;
+        if (squareSemiWave > maxSquareSemiWave) {
+            maxSquareSemiWave = squareSemiWave;
+        }
     }
 
     public Double getTimeFromChangeDirPoint() {
@@ -198,6 +228,9 @@ public class HeartSoundPortion {
 
     public void setFirstDerivative(Double firstDerivative) {
         this.firstDerivative = firstDerivative;
+        if (firstDerivative > maxFirstDerivative) {
+            maxFirstDerivative = firstDerivative;
+        }
     }
 
     public Double getSecondDerivative() {
@@ -206,6 +239,9 @@ public class HeartSoundPortion {
 
     public void setSecondDerivative(Double secondDerivative) {
         this.secondDerivative = secondDerivative;
+        if (secondDerivative > maxSecondDerivative) {
+            maxSecondDerivative = secondDerivative;
+        }
     }
 
     public Double getWindowChangeDirPointsCnt() {
@@ -223,6 +259,22 @@ public class HeartSoundPortion {
     public void setWindowInflectionPointsCnt(Double windowInflectionPointsCnt) {
         this.windowInflectionPointsCnt = windowInflectionPointsCnt;
     }
+
+    public boolean isChangerDirectionPoint() {
+        return changerDirectionPoint;
+    }
+
+    public void setChangerDirectionPoint(boolean changerDirectionPoint) {
+        this.changerDirectionPoint = changerDirectionPoint;
+    }
+
+    public boolean isInflectionPoint() {
+        return inflectionPoint;
+    }
+
+    public void setInflectionPoint(boolean inflectionPoint) {
+        this.inflectionPoint = inflectionPoint;
+    }
     
     
     
@@ -231,8 +283,8 @@ public class HeartSoundPortion {
         res[WavColumn.TIME.get()] = (double)getTs().getTime();
         res[WavColumn.SIGNAL.get()] = getIn();
         res[WavColumn.MAGNITUDE.get()] = getMagnitude();
-        res[WavColumn.SX.get()] = (isSx()) ? 1.0D : 0.0D;
-        res[WavColumn.MAX_HARMONIC_INDEX.get()] = getMaxHarmonic();
+        res[WavColumn.SX.get()] = (isSx()) ? 1.0D : Double.MIN_VALUE;
+        res[WavColumn.HARMONIC_INDEX.get()] = getHarmonicIndex();
         res[WavColumn.SQUARE_SEMI_WAVE.get()] = getSquareSemiWave();
         res[WavColumn.WINDOWS_ENERGY.get()] = getWindowEnergy();
         res[WavColumn.TIME_FROM_CHANGE_POINT.get()] = getTimeFromChangeDirPoint();
@@ -247,6 +299,16 @@ public class HeartSoundPortion {
     
     public int columnsCnt() {
         return WavColumn.SIZE.get();
+    }
+    
+    public void normalize() {
+        setMagnitude((maxMagnitude == Double.MIN_VALUE) ? Double.MIN_VALUE : getMagnitude() / maxMagnitude);
+        setWindowEnergy((maxWindowEnergy == Double.MIN_VALUE) ? Double.MIN_VALUE : getWindowEnergy() / maxWindowEnergy);
+        setHarmonicIndex((maxHarmonicIndex == Double.MIN_VALUE) ? Double.MIN_VALUE : getHarmonicIndex() / maxHarmonicIndex);
+        setSquareSemiWave((maxSquareSemiWave == Double.MIN_VALUE) ? Double.MIN_VALUE : getSquareSemiWave() / maxSquareSemiWave);
+        setFirstDerivative((maxFirstDerivative == Double.MIN_VALUE) ? Double.MIN_VALUE : getFirstDerivative() / maxFirstDerivative);
+        setSecondDerivative((maxSecondDerivative == Double.MIN_VALUE) ? Double.MIN_VALUE : getSecondDerivative() / maxSecondDerivative);
+        //set.AAA((max.AAA == Double.MIN_VALUE) ? Double.MIN_VALUE : get.AAA() / max.AAA);
     }
     
     @Override
