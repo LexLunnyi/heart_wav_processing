@@ -41,13 +41,6 @@ public class WavContainer {
     private final WavFile wavFile;
     private final int WINDOW_SIZE;
     private final int WINDOW_STEP;
-
-    private Double maxWindowEnergy = Double.MIN_VALUE;
-    private Double maxMagnitude = Double.MIN_VALUE;
-    private Double maxHarmonicIndex = Double.MIN_VALUE;
-    private Double maxSemiWave = Double.MIN_VALUE;
-    private Double maxFirstDerivative = Double.MIN_VALUE;
-    private Double maxSecondDerivative = Double.MIN_VALUE;
     
     private Double maxValue = Double.MIN_VALUE;
     private Double minValue = Double.MAX_VALUE;
@@ -194,6 +187,8 @@ public class WavContainer {
         double diffPhase = Double.MIN_VALUE;
         double harmonicIndex = Double.MIN_VALUE;
         HeartSoundPortion.init();
+        
+        calcSemiWaveSquare();
 
         for (int index = 0; index < size; index += WINDOW_STEP) {
             //System.out.print("index: " + Integer.toString(index) + "\n");
@@ -212,6 +207,18 @@ public class WavContainer {
             diffPhase = curPortion.getMagnitudesAngle();
             windowEnergy = curPortion.getWindowEnergy();
             harmonicIndex = curPortion.getHarmonicIndex();
+            
+            int changeDirectionPointCount = 0;
+            int inflectionPointCount = 0;
+            for (int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
+                HeartSoundPortion cur = data.get(index + j);
+                if (cur.isChangeDirectionPoint()) {
+                    changeDirectionPointCount++;
+                }
+                if (cur.isInflectionPoint()) {
+                    inflectionPointCount++;
+                }
+            }
 
             //Set subband parameters
             for (int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
@@ -221,10 +228,12 @@ public class WavContainer {
                 cur.setPhase(phase);
                 cur.setMagnitudesAngle(diffPhase);
                 cur.setHarmonicIndex(harmonicIndex);
+                cur.setWindowChangeDirPointsCnt((double)changeDirectionPointCount);
+                cur.setWindowInflectionPointsCnt((double)inflectionPointCount);
             }
         }
         
-        calcSemiWaveSquare();
+        
         normalize();
         s1s2Detection();
         System.out.println(mHisto.toString());
@@ -236,19 +245,35 @@ public class WavContainer {
         double semiWaveSquare = Double.MIN_VALUE;
         double prevIn = Double.MIN_VALUE;
         double in = Double.MIN_VALUE;
-        double firstDer = Double.MIN_VALUE;
+        double firstDer;
         double prevFirstDer = Double.MIN_VALUE;
+        double secondDer;
+        double prevSecondDer = Double.MIN_VALUE;
+        boolean directionUp = true;
+        boolean inflectionOut = true;
+        
+        int cntFromLastDirection = 0;
+        int cntFromLastInflection = 0;
         
         for (HeartSoundPortion cur : data) {
             in = cur.getIn();
             firstDer = in - prevIn;
-            double secondDer = firstDer - prevFirstDer;
+            secondDer = firstDer - prevFirstDer;
             
             cur.setFirstDerivative(firstDer);
-            maxFirstDerivative = (cur.getFirstDerivative() > maxFirstDerivative) ? cur.getFirstDerivative() : maxFirstDerivative;
-            
             cur.setSecondDerivative(secondDer);
-            maxSecondDerivative = (cur.getSecondDerivative() > maxSecondDerivative) ? cur.getSecondDerivative() : maxSecondDerivative;
+            
+            boolean curDirectionUp = (firstDer >= Double.MIN_VALUE);
+            cur.setChangeDirectionPoint(directionUp ^ curDirectionUp);
+            cntFromLastDirection = (cur.isChangeDirectionPoint()) ? 0 : cntFromLastDirection++;
+            cur.setTimeFromChangeDirPoint((double)cntFromLastDirection / (double) wavFile.getSampleRate());
+            directionUp = curDirectionUp;
+                
+            boolean curInflectionOut = (secondDer >= Double.MIN_VALUE);
+            cur.setInflectionPoint(inflectionOut ^ curInflectionOut);
+            cntFromLastInflection = (cur.isInflectionPoint()) ? 0 : cntFromLastInflection++;
+            cur.setTimeFromInflectionPoint((double)cntFromLastInflection / (double) wavFile.getSampleRate());
+            inflectionOut = curInflectionOut;
             
             boolean newSemiWave = ((prevIn * in < Double.MIN_VALUE) || ((prevIn != Double.MIN_VALUE) && (in == Double.MIN_VALUE)));
             if (newSemiWave) {
@@ -260,6 +285,7 @@ public class WavContainer {
             }
             prevIn = in;
             prevFirstDer = firstDer;
+            prevSecondDer = secondDer;
         }
         
         semiWaveSquare += Math.abs(in);

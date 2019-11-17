@@ -59,7 +59,7 @@ public class HeartSoundPortion {
     private boolean Sx;
     private boolean S1;
     private boolean S2;
-    private boolean changerDirectionPoint;
+    private boolean changeDirectionPoint;
     private boolean inflectionPoint;
     
     static private double maxWindowEnergy = Double.MIN_VALUE;
@@ -68,7 +68,10 @@ public class HeartSoundPortion {
     static private double maxSquareSemiWave = Double.MIN_VALUE;
     static private double maxFirstDerivative = Double.MIN_VALUE;
     static private double maxSecondDerivative = Double.MIN_VALUE;
-    
+    static private double maxWindowChangeDirPointsCnt = Double.MIN_VALUE;
+    static private double maxWindowInflectionPointsCnt = Double.MIN_VALUE;
+    static private double maxTimeFromChangeDirPoint = Double.MIN_VALUE;
+    static private double maxTimeFromInflectionPoint = Double.MIN_VALUE;
     
     private final List<HeartSoundSpectrumPortion> spectrum = new ArrayList<>();
 
@@ -91,6 +94,8 @@ public class HeartSoundPortion {
         this.Sx = false;
         this.S1 = false;
         this.S2 = false;
+        this.changeDirectionPoint = false;
+        this.inflectionPoint = false;
     }
     
     static public void init() {
@@ -100,6 +105,10 @@ public class HeartSoundPortion {
         maxSquareSemiWave = Double.MIN_VALUE;
         maxFirstDerivative = Double.MIN_VALUE;
         maxSecondDerivative = Double.MIN_VALUE; 
+        maxWindowChangeDirPointsCnt = Double.MIN_VALUE;
+        maxWindowInflectionPointsCnt = Double.MIN_VALUE;
+        maxTimeFromChangeDirPoint = Double.MIN_VALUE;
+        maxTimeFromInflectionPoint = Double.MIN_VALUE;
     }
 
     public Date getTs() {
@@ -204,6 +213,9 @@ public class HeartSoundPortion {
 
     public void setTimeFromChangeDirPoint(Double timeFromChangeDirPoint) {
         this.timeFromChangeDirPoint = timeFromChangeDirPoint;
+        if (timeFromChangeDirPoint > maxTimeFromChangeDirPoint) {
+            maxTimeFromChangeDirPoint = timeFromChangeDirPoint;
+        }
     }
 
     public Double getTimeFromInflectionPoint() {
@@ -212,6 +224,9 @@ public class HeartSoundPortion {
 
     public void setTimeFromInflectionPoint(Double timeFromInflectionPoint) {
         this.timeFromInflectionPoint = timeFromInflectionPoint;
+        if (timeFromInflectionPoint > maxTimeFromInflectionPoint) {
+            maxTimeFromInflectionPoint = timeFromInflectionPoint;
+        }
     }
 
     public Double getMagnitudesAngle() {
@@ -250,6 +265,9 @@ public class HeartSoundPortion {
 
     public void setWindowChangeDirPointsCnt(Double windowChangeDirPointsCnt) {
         this.windowChangeDirPointsCnt = windowChangeDirPointsCnt;
+        if (windowChangeDirPointsCnt > maxWindowChangeDirPointsCnt) {
+            maxWindowChangeDirPointsCnt = windowChangeDirPointsCnt;
+        }
     }
 
     public Double getWindowInflectionPointsCnt() {
@@ -258,14 +276,17 @@ public class HeartSoundPortion {
 
     public void setWindowInflectionPointsCnt(Double windowInflectionPointsCnt) {
         this.windowInflectionPointsCnt = windowInflectionPointsCnt;
+        if (windowInflectionPointsCnt > maxWindowInflectionPointsCnt) {
+            maxWindowInflectionPointsCnt = windowInflectionPointsCnt;
+        }
     }
 
-    public boolean isChangerDirectionPoint() {
-        return changerDirectionPoint;
+    public boolean isChangeDirectionPoint() {
+        return changeDirectionPoint;
     }
 
-    public void setChangerDirectionPoint(boolean changerDirectionPoint) {
-        this.changerDirectionPoint = changerDirectionPoint;
+    public void setChangeDirectionPoint(boolean changeDirectionPoint) {
+        this.changeDirectionPoint = changeDirectionPoint;
     }
 
     public boolean isInflectionPoint() {
@@ -308,6 +329,10 @@ public class HeartSoundPortion {
         setSquareSemiWave((maxSquareSemiWave == Double.MIN_VALUE) ? Double.MIN_VALUE : getSquareSemiWave() / maxSquareSemiWave);
         setFirstDerivative((maxFirstDerivative == Double.MIN_VALUE) ? Double.MIN_VALUE : getFirstDerivative() / maxFirstDerivative);
         setSecondDerivative((maxSecondDerivative == Double.MIN_VALUE) ? Double.MIN_VALUE : getSecondDerivative() / maxSecondDerivative);
+        setWindowInflectionPointsCnt((maxWindowInflectionPointsCnt == Double.MIN_VALUE) ? Double.MIN_VALUE : getWindowInflectionPointsCnt() / maxWindowInflectionPointsCnt);
+        setWindowChangeDirPointsCnt((maxWindowChangeDirPointsCnt == Double.MIN_VALUE) ? Double.MIN_VALUE : getWindowChangeDirPointsCnt() / maxWindowChangeDirPointsCnt);
+        setTimeFromChangeDirPoint((maxTimeFromChangeDirPoint == Double.MIN_VALUE) ? Double.MIN_VALUE : getTimeFromChangeDirPoint() / maxTimeFromChangeDirPoint);
+        setTimeFromInflectionPoint((maxTimeFromInflectionPoint == Double.MIN_VALUE) ? Double.MIN_VALUE : getTimeFromInflectionPoint() / maxTimeFromInflectionPoint);
         //set.AAA((max.AAA == Double.MIN_VALUE) ? Double.MIN_VALUE : get.AAA() / max.AAA);
     }
     
