@@ -116,6 +116,7 @@ public class WavContainer {
 
     public void saveCSV(String fileName) throws IOException {
         try (FileWriter fileWriter = new FileWriter(fileName)) {
+            fileWriter.write(data.get(0).getColumnsNames() + "\n");
             for (HeartSoundPortion heartSoundPortion : data) {
                 Double[] all = heartSoundPortion.getColumns();
                 String row = "";
@@ -235,7 +236,9 @@ public class WavContainer {
         
         
         normalize();
-        s1s2Detection();
+        //s1s2Detection();
+        //Детектируем основные тона
+        sxDetection(false);
         System.out.println(mHisto.toString());
         System.out.println("Threshold: " + mHisto.getThreshold() + "\n");
     }
@@ -332,6 +335,8 @@ public class WavContainer {
         for (HeartSoundPortion heartSoundPortion : data) {
             heartSoundPortion.normalize();
             mHisto.push(heartSoundPortion.getMagnitude());
+            //mHisto.push(heartSoundPortion.getWindowEnergy());
+            //mHisto.push(heartSoundPortion.getSquareSemiWave());
         }
     }
 

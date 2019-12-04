@@ -28,6 +28,7 @@ enum WavColumn {
     SECOND_DERIVATIVE(13),
     SIZE(14);
     
+    
     int index;
 
     private WavColumn(int index) {
@@ -297,6 +298,25 @@ public class HeartSoundPortion {
         this.inflectionPoint = inflectionPoint;
     }
     
+    
+    public String getColumnsNames() {
+        StringBuilder sbuf = new StringBuilder();
+        sbuf.append(WavColumn.TIME.name()).append(";");
+        sbuf.append(WavColumn.SIGNAL.name()).append(";");
+        sbuf.append(WavColumn.MAGNITUDE.name()).append(";");
+        sbuf.append(WavColumn.SX.name()).append(";");
+        sbuf.append(WavColumn.HARMONIC_INDEX.name()).append(";");
+        sbuf.append(WavColumn.SQUARE_SEMI_WAVE.name()).append(";");
+        sbuf.append(WavColumn.WINDOWS_ENERGY.name()).append(";");
+        sbuf.append(WavColumn.TIME_FROM_CHANGE_POINT.name()).append(";");
+        sbuf.append(WavColumn.TIME_FROM_INFLECTION_POINT.name()).append(";");
+        sbuf.append(WavColumn.MAGNITUDES_ANGLE.name()).append(";");
+        sbuf.append(WavColumn.WINDOW_CHANGE_POINTS_CNT.name()).append(";");
+        sbuf.append(WavColumn.WINDOW_INFLECTION_POINTS_CNT.name()).append(";");
+        sbuf.append(WavColumn.FIRST_DERIVATIVE.name()).append(";");
+        sbuf.append(WavColumn.SECOND_DERIVATIVE.name()).append(";");
+        return sbuf.toString();
+    }
     
     
     public Double[] getColumns() {
