@@ -14,19 +14,20 @@ import java.util.List;
 enum WavColumn {
     TIME(0),
     SIGNAL(1),
-    MAGNITUDE(2),
-    SX(3),
-    HARMONIC_INDEX(4),
-    SQUARE_SEMI_WAVE(5),
-    WINDOWS_ENERGY(6),
-    TIME_FROM_CHANGE_POINT(7),
-    TIME_FROM_INFLECTION_POINT(8),
-    MAGNITUDES_ANGLE(9),
-    WINDOW_CHANGE_POINTS_CNT(10),
-    WINDOW_INFLECTION_POINTS_CNT(11),
-    FIRST_DERIVATIVE(12),
-    SECOND_DERIVATIVE(13),
-    SIZE(14);
+    FILTRED(2),
+    MAGNITUDE(3),
+    SX(4),
+    HARMONIC_INDEX(5),
+    SQUARE_SEMI_WAVE(6),
+    WINDOWS_ENERGY(7),
+    TIME_FROM_CHANGE_POINT(8),
+    TIME_FROM_INFLECTION_POINT(9),
+    MAGNITUDES_ANGLE(10),
+    WINDOW_CHANGE_POINTS_CNT(11),
+    WINDOW_INFLECTION_POINTS_CNT(12),
+    FIRST_DERIVATIVE(13),
+    SECOND_DERIVATIVE(14),
+    SIZE(15);
     
     
     int index;
@@ -299,32 +300,50 @@ public class HeartSoundPortion {
     }
     
     
-    public String getColumnsNames() {
+    public String getColumnsNames(boolean sourceOnly) {
         StringBuilder sbuf = new StringBuilder();
         sbuf.append(WavColumn.TIME.name()).append(";");
-        sbuf.append(WavColumn.SIGNAL.name()).append(";");
-        sbuf.append(WavColumn.MAGNITUDE.name()).append(";");
-        sbuf.append(WavColumn.SX.name()).append(";");
-        sbuf.append(WavColumn.HARMONIC_INDEX.name()).append(";");
-        sbuf.append(WavColumn.SQUARE_SEMI_WAVE.name()).append(";");
-        sbuf.append(WavColumn.WINDOWS_ENERGY.name()).append(";");
-        sbuf.append(WavColumn.TIME_FROM_CHANGE_POINT.name()).append(";");
-        sbuf.append(WavColumn.TIME_FROM_INFLECTION_POINT.name()).append(";");
-        sbuf.append(WavColumn.MAGNITUDES_ANGLE.name()).append(";");
-        sbuf.append(WavColumn.WINDOW_CHANGE_POINTS_CNT.name()).append(";");
-        sbuf.append(WavColumn.WINDOW_INFLECTION_POINTS_CNT.name()).append(";");
-        sbuf.append(WavColumn.FIRST_DERIVATIVE.name()).append(";");
-        sbuf.append(WavColumn.SECOND_DERIVATIVE.name()).append(";");
+        sbuf.append(WavColumn.SIGNAL.name());
+        if (!sourceOnly) {
+            sbuf.append(WavColumn.FILTRED.name()).append(";");
+            sbuf.append(WavColumn.MAGNITUDE.name()).append(";");
+            sbuf.append(WavColumn.SX.name()).append(";");
+            sbuf.append(WavColumn.HARMONIC_INDEX.name()).append(";");
+            sbuf.append(WavColumn.SQUARE_SEMI_WAVE.name()).append(";");
+            sbuf.append(WavColumn.WINDOWS_ENERGY.name()).append(";");
+            sbuf.append(WavColumn.TIME_FROM_CHANGE_POINT.name()).append(";");
+            sbuf.append(WavColumn.TIME_FROM_INFLECTION_POINT.name()).append(";");
+            sbuf.append(WavColumn.MAGNITUDES_ANGLE.name()).append(";");
+            sbuf.append(WavColumn.WINDOW_CHANGE_POINTS_CNT.name()).append(";");
+            sbuf.append(WavColumn.WINDOW_INFLECTION_POINTS_CNT.name()).append(";");
+            sbuf.append(WavColumn.FIRST_DERIVATIVE.name()).append(";");
+            sbuf.append(WavColumn.SECOND_DERIVATIVE.name());
+        }
         return sbuf.toString();
     }
     
     
-    public Double[] getColumns() {
+    private Double[] getSourceOnlyColumns() {
+        Double[] res = new Double[2];
+        res[WavColumn.TIME.get()] = (double)getTs().getTime();
+        res[WavColumn.SIGNAL.get()] = getIn();
+        return res;
+    }
+    
+    
+    public Double[] getColumns(boolean sourceOnly) {
+        if (sourceOnly) {
+            return getSourceOnlyColumns();
+        }
         Double[] res = new Double[WavColumn.SIZE.get()];
         res[WavColumn.TIME.get()] = (double)getTs().getTime();
         res[WavColumn.SIGNAL.get()] = getIn();
+        res[WavColumn.FILTRED.get()] = getOut();
         res[WavColumn.MAGNITUDE.get()] = getMagnitude();
         res[WavColumn.SX.get()] = (isSx()) ? 1.0D : Double.MIN_VALUE;
+        //double diff = (isSx()) ? 1.0 - getMagnitude() : getMagnitude();
+        //diff = Math.pow(diff, 4.0);
+        //res[WavColumn.SX.get()] = (isSx()) ? 1.0 - diff : diff;
         res[WavColumn.HARMONIC_INDEX.get()] = getHarmonicIndex();
         res[WavColumn.SQUARE_SEMI_WAVE.get()] = getSquareSemiWave();
         res[WavColumn.WINDOWS_ENERGY.get()] = getWindowEnergy();
@@ -338,8 +357,8 @@ public class HeartSoundPortion {
         return res;
     }
     
-    public int columnsCnt() {
-        return WavColumn.SIZE.get();
+    public int columnsCnt(boolean sourceOnly) {
+        return (sourceOnly) ? 2 : WavColumn.SIZE.get();
     }
     
     public void normalize() {

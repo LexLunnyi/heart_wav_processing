@@ -12,18 +12,19 @@ class Options():
 class Columns():
     TIME                         = 0
     SIGNAL                       = 1
-    MAGNITUDE                    = 2
-    SX                           = 3
-    MAX_HARMONIC_INDEX           = 4
-    SQUARE_SEMI_WAVE             = 5
-    WINDOWS_ENERGY               = 6
-    TIME_FROM_CHANGE_POINT       = 7
-    TIME_FROM_INFLECTION_POINT   = 8
-    MAGNITUDES_ANGLE             = 9
-    WINDOW_CHANGE_POINTS_CNT     = 10
-    WINDOW_INFLECTION_POINTS_CNT = 11
-    FIRST_DERIVATIVE             = 12
-    SECOND_DERIVATIVE            = 13
+    FILTRED                      = 2
+    MAGNITUDE                    = 3
+    SX                           = 4
+    MAX_HARMONIC_INDEX           = 5
+    SQUARE_SEMI_WAVE             = 6
+    WINDOWS_ENERGY               = 7
+    TIME_FROM_CHANGE_POINT       = 8
+    TIME_FROM_INFLECTION_POINT   = 9
+    MAGNITUDES_ANGLE             = 10
+    WINDOW_CHANGE_POINTS_CNT     = 11
+    WINDOW_INFLECTION_POINTS_CNT = 12
+    FIRST_DERIVATIVE             = 13
+    SECOND_DERIVATIVE            = 14
 
 
 class Figure():
@@ -44,18 +45,19 @@ class Figure():
         plt.rcParams["legend.loc"] = 'upper right'
         
         plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SIGNAL], label='SIGNAL')
+        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.FILTRED], label='FILTRED')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDE], label='MAGNITUDE')
-        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAX_HARMONIC_INDEX], label='MAX_HARMONIC_INDEX')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SQUARE_SEMI_WAVE], label='SQUARE_SEMI_WAVE')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.WINDOWS_ENERGY], label='WINDOWS_ENERGY')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.TIME_FROM_CHANGE_POINT], label='TIME_FROM_CHANGE_POINT')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.TIME_FROM_INFLECTION_POINT], label='TIME_FROM_INFLECTION_POINT')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDES_ANGLE], label='MAGNITUDES_ANGLE')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.WINDOW_CHANGE_POINTS_CNT], label='WINDOW_CHANGE_POINTS_CNT')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.WINDOW_INFLECTION_POINTS_CNT], label='WINDOW_INFLECTION_POINTS_CNT')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.FIRST_DERIVATIVE], label='FIRST_DERIVATIVE')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SECOND_DERIVATIVE], label='SECOND_DERIVATIVE')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAX_HARMONIC_INDEX], label='MAX-HARMONIC-INDEX')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SQUARE_SEMI_WAVE], label='SQUARE-SEMI-WAVE')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.WINDOWS_ENERGY], label='WINDOWS-ENERGY')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.TIME_FROM_CHANGE_POINT], label='TIME-FROM-CHANGE-POINT')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.TIME_FROM_INFLECTION_POINT], label='TIME-FROM-INFLECTION-POINT')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDES_ANGLE], label='MAGNITUDES-ANGLE')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.WINDOW_CHANGE_POINTS_CNT], label='WINDOW-CHANGE-POINTS-CNT')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.WINDOW_INFLECTION_POINTS_CNT], label='WINDOW-INFLECTION-POINTS-CNT')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.FIRST_DERIVATIVE], label='FIRST-DERIVATIVE')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SECOND_DERIVATIVE], label='SECOND-DERIVATIVE')
 
         plt.legend()
         plt.savefig(self.png)

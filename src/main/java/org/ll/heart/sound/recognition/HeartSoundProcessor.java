@@ -30,8 +30,10 @@ public class HeartSoundProcessor {
     
     
     public void processFiles() throws Exception {
+        final boolean OUTPUT_ONLY_SOURCE_SIGNAL = true;
+        
         try (FileWriter fileWriter = new FileWriter(options.getOutputDir() + "/output.csv")) {
-            String resRow = "N;file;sampleRate;channels;windowSize;windowStep;\n";
+            String resRow = "INDEX;GROUP;PATH;FILE;SAMPLE_RATE;CHANNELS;WINDOW_SIZE;WINDOW_STEP;\n";
             fileWriter.write(resRow);
             int index = 1;
 
@@ -43,12 +45,11 @@ public class HeartSoundProcessor {
                 List<String> files = searchFiles(inputPath);
                 for (String file : files) {
                     System.out.print("FILE: " + file + "\n");
-                    WavContainer wav = new WavContainer(inputPath + "/" + file, this.options);
+                    WavContainer wav = new WavContainer(inputPath + "/" + file, this.options, OUTPUT_ONLY_SOURCE_SIGNAL);
                     wav.makeOutput();
-                    String outFileName = outputPath + "/" + file + ".csv";
-                    wav.saveCSV(outFileName);
+                    wav.saveCSV(outputPath, file);
                     WavFile header = wav.getWavFile();
-                    resRow = Integer.toString(index) + ";" + hsc.getPath() + "/" + file + ".csv;" + 
+                    resRow = Integer.toString(index) + ";" + Integer.toString(hsc.getIndex()) + ";" + hsc.getPath() + ";" + file + ".csv;" + 
                              Long.toString(header.getSampleRate()) + ";" + Integer.toString(header.getNumChannels()) + ";" +
                              Integer.toString(wav.getWindowSize()) + ";" + Integer.toString(wav.getWindowStep()) + "\n";
                     fileWriter.write(resRow);

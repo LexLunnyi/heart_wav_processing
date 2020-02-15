@@ -45,13 +45,15 @@ public class WavContainer {
     private Double maxValue = Double.MIN_VALUE;
     private Double minValue = Double.MAX_VALUE;
     private Double freqStep = Double.MIN_VALUE;
+    
+    private final boolean sourceOnly;
 
-    public WavContainer(String fileName, Options options) throws IOException, Exception {
+    public WavContainer(String fileName, Options options, boolean sourceOnly) throws IOException, Exception {
         this.fileName = fileName;
         this.options = options;
         this.WAV_LIMIT_BEGIN = new Date(options.getWavLengthMin());
         this.WAV_LIMIT_END = new Date(options.getWavLengthMax());
-
+        this.sourceOnly = sourceOnly;
         
         long index = 0;
         // Open the wav file specified as the first argument
@@ -114,14 +116,21 @@ public class WavContainer {
         return minValue;
     }
 
-    public void saveCSV(String fileName) throws IOException {
-        try (FileWriter fileWriter = new FileWriter(fileName)) {
-            fileWriter.write(data.get(0).getColumnsNames() + "\n");
+    public void saveCSV(String outputPath, String curName) throws IOException {
+        String outFileName = outputPath + "/" + curName + ".csv";
+        File file = new File(outputPath);
+        file.mkdir();
+        try (FileWriter fileWriter = new FileWriter(outFileName)) {
+            fileWriter.write(data.get(0).getColumnsNames(sourceOnly) + "\n");
             for (HeartSoundPortion heartSoundPortion : data) {
-                Double[] all = heartSoundPortion.getColumns();
+                Double[] all = heartSoundPortion.getColumns(sourceOnly);
                 String row = "";
-                for(int j = 0; j < heartSoundPortion.columnsCnt(); j++) {
-                    row += Double.toString(all[j]) + ";";
+                int cSize = heartSoundPortion.columnsCnt(sourceOnly);
+                for(int j = 0; j < cSize; j++) {
+                    row += Double.toString(all[j]);
+                    if (j != cSize - 1) {
+                        row += ";";
+                    }
                 }
                 row += "\n";
                 fileWriter.write(row);
@@ -141,8 +150,7 @@ public class WavContainer {
         Complex[] res = transformer.transform(input, TransformType.FORWARD);
         int size = res.length;
         Complex tmp = new Complex(0, 0);
-        double maxHarmonic = Double.MIN_VALUE;
-        int maxHormonicIndex = 0;
+        double harmonics = Double.MIN_VALUE;
         double windowEnergy = Double.MIN_VALUE;
         
         //String row = tsFormat.format(curPortion.getTs()) + ";";
@@ -154,10 +162,7 @@ public class WavContainer {
                 res[i] = new Complex(0);
                 res[size - i] = new Complex(0);
             } else if (null != prev) {
-                if (res[i].abs() > maxHarmonic) {
-                    maxHarmonic = res[i].abs();
-                    maxHormonicIndex = i;
-                }
+                harmonics += res[i].abs() * curFreq;
                 Complex diff = prev[i].subtract(res[i]);
                 tmp = tmp.add(diff);
                 windowEnergy += res[i].abs();
@@ -169,13 +174,16 @@ public class WavContainer {
         curPortion.setMagnitude(tmp.abs());
         curPortion.setPhase(0.0);//FIXME currently not needed
         curPortion.setMagnitudesAngle(tmp.getArgument());
-        curPortion.setHarmonicIndex(2.0 * (double)maxHormonicIndex / (double)size);
+        curPortion.setHarmonicIndex(harmonics);
         curPortion.setWindowEnergy(windowEnergy);
 
         return res;
     }
 
     public void makeOutput() {
+        if (sourceOnly) {
+            return;
+        }
         long size = data.size();
         double[] input = new double[WINDOW_SIZE];
         int FIRST = WINDOW_SIZE / 2 - WINDOW_STEP / 2;
@@ -189,8 +197,6 @@ public class WavContainer {
         double harmonicIndex = Double.MIN_VALUE;
         HeartSoundPortion.init();
         
-        calcSemiWaveSquare();
-
         for (int index = 0; index < size; index += WINDOW_STEP) {
             //System.out.print("index: " + Integer.toString(index) + "\n");
             if (index + WINDOW_SIZE >= size) {
@@ -200,7 +206,7 @@ public class WavContainer {
                 input[j] = data.get(index + j).getIn();
             }
 
-            HeartSoundPortion curPortion = data.get(index + FIRST);
+            HeartSoundPortion curPortion = data.get(index);
             fftData = FourierProcessing(curPortion, input, fftData);
 
             magnitude = curPortion.getMagnitude();
@@ -209,18 +215,20 @@ public class WavContainer {
             windowEnergy = curPortion.getWindowEnergy();
             harmonicIndex = curPortion.getHarmonicIndex();
             
-            int changeDirectionPointCount = 0;
-            int inflectionPointCount = 0;
+            output = transformer.transform(fftData, TransformType.INVERSE);
+            
+            
             for (int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
                 HeartSoundPortion cur = data.get(index + j);
-                if (cur.isChangeDirectionPoint()) {
-                    changeDirectionPointCount++;
-                }
-                if (cur.isInflectionPoint()) {
-                    inflectionPointCount++;
+                //Save filtred data
+                cur.setMagnitude(magnitude);
+                if (output[j].getReal() < 0) {
+                    cur.setOut(output[j].abs()*(-1.0));
+                } else {
+                    cur.setOut(output[j].abs());
                 }
             }
-
+/*
             //Set subband parameters
             for (int j = FIRST; j < (FIRST + WINDOW_STEP); j++) {
                 HeartSoundPortion cur = data.get(index + j);
@@ -229,12 +237,38 @@ public class WavContainer {
                 cur.setPhase(phase);
                 cur.setMagnitudesAngle(diffPhase);
                 cur.setHarmonicIndex(harmonicIndex);
-                cur.setWindowChangeDirPointsCnt((double)changeDirectionPointCount);
-                cur.setWindowInflectionPointsCnt((double)inflectionPointCount);
             }
+*/
         }
         
-        
+        calcParameters();
+ 
+        int changeDirectionPointCount = 0;
+        int inflectionPointCount = 0;
+        /*
+        for (int index = 0; index < size - WINDOW_SIZE; index++ ) {
+            changeDirectionPointCount = 0;
+            inflectionPointCount = 0;
+            for (int j = FIRST; j < (FIRST + WINDOW_SIZE); j++) {
+                HeartSoundPortion cur = data.get(index + j);
+                //Calc change direction and inflection points
+                if (cur.isChangeDirectionPoint()) {
+                    changeDirectionPointCount++;
+                }
+                if (cur.isInflectionPoint()) {
+                    inflectionPointCount++;
+                }
+            }
+            HeartSoundPortion cur = data.get(index);
+            cur.setWindowChangeDirPointsCnt((double)changeDirectionPointCount);
+            cur.setWindowInflectionPointsCnt((double)inflectionPointCount);
+        }
+        for (int index = (int)size - WINDOW_SIZE; index < size; index++) {
+            HeartSoundPortion cur = data.get(index);
+            cur.setWindowChangeDirPointsCnt((double)changeDirectionPointCount);
+            cur.setWindowInflectionPointsCnt((double)inflectionPointCount);
+        }
+        */
         normalize();
         //s1s2Detection();
         //Детектируем основные тона
@@ -244,7 +278,7 @@ public class WavContainer {
     }
     
     
-    private void calcSemiWaveSquare() {
+    private void calcParameters() {
         double semiWaveSquare = Double.MIN_VALUE;
         double prevIn = Double.MIN_VALUE;
         double in = Double.MIN_VALUE;
@@ -259,6 +293,7 @@ public class WavContainer {
         int cntFromLastInflection = 0;
         
         for (HeartSoundPortion cur : data) {
+            //in = cur.getOut();
             in = cur.getIn();
             firstDer = in - prevIn;
             secondDer = firstDer - prevFirstDer;
@@ -267,15 +302,23 @@ public class WavContainer {
             cur.setSecondDerivative(secondDer);
             
             boolean curDirectionUp = (firstDer >= Double.MIN_VALUE);
-            cur.setChangeDirectionPoint(directionUp ^ curDirectionUp);
-            cntFromLastDirection = (cur.isChangeDirectionPoint()) ? 0 : cntFromLastDirection++;
-            cur.setTimeFromChangeDirPoint((double)cntFromLastDirection / (double) wavFile.getSampleRate());
+            cur.setChangeDirectionPoint(directionUp != curDirectionUp);
+            if (cur.isChangeDirectionPoint()) {
+                cntFromLastDirection = 0;
+            } else {
+                cntFromLastDirection++;
+            }
+            cur.setTimeFromChangeDirPoint((double)cntFromLastDirection);
             directionUp = curDirectionUp;
                 
             boolean curInflectionOut = (secondDer >= Double.MIN_VALUE);
-            cur.setInflectionPoint(inflectionOut ^ curInflectionOut);
-            cntFromLastInflection = (cur.isInflectionPoint()) ? 0 : cntFromLastInflection++;
-            cur.setTimeFromInflectionPoint((double)cntFromLastInflection / (double) wavFile.getSampleRate());
+            cur.setInflectionPoint(inflectionOut != curInflectionOut);
+            if (cur.isInflectionPoint()) {
+                cntFromLastInflection = 0;
+            } else {
+                cntFromLastInflection++;
+            }
+            cur.setTimeFromInflectionPoint((double)cntFromLastInflection);
             inflectionOut = curInflectionOut;
             
             boolean newSemiWave = ((prevIn * in < Double.MIN_VALUE) || ((prevIn != Double.MIN_VALUE) && (in == Double.MIN_VALUE)));

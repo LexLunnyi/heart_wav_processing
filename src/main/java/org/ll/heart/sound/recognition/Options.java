@@ -51,7 +51,7 @@ public class Options {
                 String catName = prop.getProperty("categories[" + i + "].name");
                 String catPath = prop.getProperty("categories[" + i + "].path");
                 String catTag = prop.getProperty("categories[" + i + "].tag");
-                categories.add(new HeartSoundCategory(catName, catPath, catTag));
+                categories.add(new HeartSoundCategory(i, catName, catPath, catTag));
             }
 
             printProperties();
