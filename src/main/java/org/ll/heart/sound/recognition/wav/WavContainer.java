@@ -16,6 +16,8 @@ import org.ll.heart.sound.recognition.MagnitudeHistogram;
 import org.ll.heart.sound.recognition.Options;
 import org.ll.heart.sound.recognition.SxNode;
 import org.ll.heart.sound.recognition.WindowParams;
+import org.ll.heart.sound.recognition.windowing.WindowingAdaptor;
+import org.ll.heart.sound.recognition.windowing.WindowingType;
 
 
 /**
@@ -32,6 +34,7 @@ public class WavContainer {
 
     private final String fileName;
     private final SimpleDateFormat tsFormat = new SimpleDateFormat("mm:ss.S");
+    private final WindowingAdaptor wAdaptor = new WindowingAdaptor();
 
     private final FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
     private final MagnitudeHistogram mHisto;
@@ -215,6 +218,7 @@ public class WavContainer {
             windowEnergy = curPortion.getWindowEnergy();
             harmonicIndex = curPortion.getHarmonicIndex();
             
+            //Complex[] wFFT = wAdaptor.process(fftData, WindowingType.BARTLETT);
             output = transformer.transform(fftData, TransformType.INVERSE);
             
             

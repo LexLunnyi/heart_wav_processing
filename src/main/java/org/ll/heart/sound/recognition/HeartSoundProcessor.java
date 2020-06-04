@@ -30,7 +30,7 @@ public class HeartSoundProcessor {
     
     
     public void processFiles() throws Exception {
-        final boolean OUTPUT_ONLY_SOURCE_SIGNAL = true;
+        final boolean OUTPUT_ONLY_SOURCE_SIGNAL = false;
         
         try (FileWriter fileWriter = new FileWriter(options.getOutputDir() + "/output.csv")) {
             String resRow = "INDEX;GROUP;PATH;FILE;SAMPLE_RATE;CHANNELS;WINDOW_SIZE;WINDOW_STEP;\n";

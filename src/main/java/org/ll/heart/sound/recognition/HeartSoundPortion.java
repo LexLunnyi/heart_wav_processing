@@ -305,7 +305,7 @@ public class HeartSoundPortion {
         sbuf.append(WavColumn.TIME.name()).append(";");
         sbuf.append(WavColumn.SIGNAL.name());
         if (!sourceOnly) {
-            sbuf.append(WavColumn.FILTRED.name()).append(";");
+            sbuf.append(";").append(WavColumn.FILTRED.name()).append(";");
             sbuf.append(WavColumn.MAGNITUDE.name()).append(";");
             sbuf.append(WavColumn.SX.name()).append(";");
             sbuf.append(WavColumn.HARMONIC_INDEX.name()).append(";");

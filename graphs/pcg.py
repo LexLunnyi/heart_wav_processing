@@ -5,8 +5,7 @@ import os
 
 
 class Options():
-    NORMAL_PATH = '/opt/data/output/normal/'
-    ABNORMAL_PATH = '/opt/data/output/abnormal/'
+    PATH = '/opt/data_debug/output/'
 
 
 class Columns():
@@ -64,12 +63,10 @@ class Figure():
         plt.clf()
 
 
-for file in os.listdir(Options.NORMAL_PATH):
-    if file.endswith(".csv"):
-        fig = Figure(Options.NORMAL_PATH, file)
-        fig.make_graphs()
-
-for file in os.listdir(Options.ABNORMAL_PATH):
-    if file.endswith(".csv"):
-        fig = Figure(Options.ABNORMAL_PATH, file)
-        fig.make_graphs()
+for item in os.listdir(Options.PATH):
+    item = os.path.join(Options.PATH, item)
+    if os.path.isdir(item):
+        for file in os.listdir(item):
+            if file.endswith(".csv"):
+                fig = Figure(item, file)
+                fig.make_graphs()
