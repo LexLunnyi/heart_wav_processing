@@ -1,4 +1,4 @@
-package org.ll.heart.sound.recognition.fdomain;
+package org.ll.heart.sound.recognition;
 
 import org.apache.commons.math3.complex.Complex;
 
@@ -7,11 +7,11 @@ import org.apache.commons.math3.complex.Complex;
  * @author aberdnikov
  */
 public class SignalPortion {
-    Complex[] in;
-    Complex[] out;
+    double[] in;
+    double[] out;
     Complex[] spectrum;
     
-    public SignalPortion() {
-        
+    public SignalPortion(double[] in) {
+        this.in = in;
     }
 }
