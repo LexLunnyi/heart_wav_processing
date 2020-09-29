@@ -28,7 +28,7 @@ public class PCGWrapper {
     private final double[] data;
     private final List<SignalPortion> PCG = new ArrayList<>();
     
-    FrequencyDomainService fservie;
+    private FrequencyDomainService fservie;
     
     public PCGWrapper(File in, Options options) throws IOException, WavFileException {
         this.options = options;
@@ -139,5 +139,13 @@ public class PCGWrapper {
                 fileWriter.write(signal.toCSV());
             }
         }
+    }
+
+    public int getWindowSize() {
+        return windowSize;
+    }
+
+    public WavFile getWavFile() {
+        return wavFile;
     }
 }

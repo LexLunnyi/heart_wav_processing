@@ -44,6 +44,18 @@ public class SignalPortion {
     public String toCSV() {
         return ts.getTime() + ";" + source + "\n";
     }
+
+    public double[] getIn() {
+        return in;
+    }
+
+    public Complex[] getSpectrum() {
+        return spectrum;
+    }
+
+    public void setSpectrum(Complex[] spectrum) {
+        this.spectrum = spectrum;
+    }
     
     public String getCSVColumnsNames(boolean sourceOnly) {
         StringBuilder sbuf = new StringBuilder();
