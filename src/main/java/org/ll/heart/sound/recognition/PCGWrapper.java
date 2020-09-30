@@ -1,5 +1,6 @@
 package org.ll.heart.sound.recognition;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -7,8 +8,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import javax.imageio.ImageIO;
+import org.apache.commons.math3.complex.Complex;
 import org.ll.heart.sound.recognition.fdomain.FrequencyDomainFFT;
 import org.ll.heart.sound.recognition.fdomain.FrequencyDomainService;
+import org.ll.heart.sound.recognition.spectrogram.PixelARGB;
 import org.ll.heart.sound.recognition.wav.WavFile;
 import org.ll.heart.sound.recognition.wav.WavFileException;
 
@@ -133,13 +137,38 @@ public class PCGWrapper {
     
     
     private void save(String out) throws IOException {
-        try (FileWriter fileWriter = new FileWriter(out)) {
+        int w = PCG.size();
+        int h = PCG.get(0).getSpectrum().length;
+        BufferedImage dst = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        
+        try (FileWriter fileWriter = new FileWriter(out + ".csv")) {
             fileWriter.write(PCG.get(0).getCSVColumnsNames(false) + "\n");
+            int wIndex = 0;
             for (SignalPortion signal : PCG) {
                 fileWriter.write(signal.toCSV());
+                Complex[] s = signal.getSpectrum();
+                int hIndex = 0;
+                for (Complex g : s) {
+                    int bright = (int)(255.0 * g.abs());
+                    PixelARGB p = new PixelARGB(255, bright, bright, bright);
+                    dst.setRGB(wIndex, hIndex, p.getPixel());
+                    hIndex++;
+                }
+                wIndex++;
             }
         }
+        
+        ImageIO.write(dst, "png", new File(out + ".png"));
     }
+    
+      
+        
+        
+
+    
+    
+    
+    
 
     public int getWindowSize() {
         return windowSize;

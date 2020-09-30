@@ -34,7 +34,7 @@ public class HeartSoundProcessor {
         String inputPath = options.getInputDir() + "/" + path;
         String outputPath = options.getOutputDir() + "/" + path;
         
-        String outFileName = outputPath + "/" + file + ".csv";
+        String outFileName = outputPath + "/" + file;
         File dir = new File(outputPath);
         dir.mkdir();
         

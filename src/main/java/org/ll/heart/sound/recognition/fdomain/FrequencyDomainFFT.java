@@ -10,7 +10,7 @@ import org.ll.heart.sound.recognition.SignalPortion;
  * @author aberdnikov
  */
 public class FrequencyDomainFFT implements FrequencyDomainService {
-    private final FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
+    private final FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.UNITARY);
     
     public FrequencyDomainFFT() {
     }
