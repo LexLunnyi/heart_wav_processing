@@ -24,6 +24,7 @@ public class Options {
     boolean wavLengthLimited;
     int wavLengthMin;
     int wavLengthMax;
+    boolean appSpectrogramSave;
     List<HeartSoundCategory> categories = new ArrayList();
     
     public Options(String path) {
@@ -34,6 +35,7 @@ public class Options {
             // load a properties file
             prop.load(input);
             // get the property value and print it out
+            appSpectrogramSave = Boolean.parseBoolean(prop.getProperty("app.spectrogram.save"));
             windowSize = Integer.parseInt(prop.getProperty("window.size"));
             windowStep = Integer.parseInt(prop.getProperty("window.step"));
             windowAuto = Boolean.parseBoolean(prop.getProperty("window.auto"));
@@ -73,6 +75,8 @@ public class Options {
     private void printProperties() {
         System.out.println("-------------------------------------------------------");
         System.out.println("OPTIONS: ");
+        System.out.println("  ");
+        System.out.println("  appSpectrogramSave -> " + Boolean.toString(appSpectrogramSave));
         System.out.println("  windowSize -> " + Integer.toString(windowSize));
         System.out.println("  windowStep -> " + Integer.toString(windowStep));
         System.out.println("  windowAuto -> " + Boolean.toString(windowAuto));
@@ -145,5 +149,9 @@ public class Options {
 
     public int getWindowFrequencyRate() {
         return windowFrequencyRate;
+    }
+
+    public boolean isAppSpectrogramSave() {
+        return appSpectrogramSave;
     }
 }

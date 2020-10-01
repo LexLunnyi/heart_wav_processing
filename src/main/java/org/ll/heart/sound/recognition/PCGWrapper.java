@@ -101,7 +101,11 @@ public class PCGWrapper {
     public void process(String out) throws IOException {
         configure();
         process();
-        save(out);
+        if (options.isAppSpectrogramSave()) {
+            saveWithSpectrogram(out);            
+        } else {
+            save(out);
+        }
     }
         
     //Configure services for transorm to frequency domain, filtration and segmentation
@@ -134,9 +138,19 @@ public class PCGWrapper {
             PCG.add(portion);
         }
     }
-    
-    
+
+
     private void save(String out) throws IOException {
+        try (FileWriter fileWriter = new FileWriter(out + ".csv")) {
+            fileWriter.write(PCG.get(0).getCSVColumnsNames(false) + "\n");
+            for (SignalPortion signal : PCG) {
+                fileWriter.write(signal.toCSV());
+            }
+        }
+    }    
+    
+    
+    private void saveWithSpectrogram(String out) throws IOException {
         int w = PCG.size();
         int h = PCG.get(0).getSpectrum().length;
         BufferedImage dst = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
