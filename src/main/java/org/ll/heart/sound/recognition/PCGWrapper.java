@@ -12,6 +12,8 @@ import javax.imageio.ImageIO;
 import org.apache.commons.math3.complex.Complex;
 import org.ll.heart.sound.recognition.fdomain.FrequencyDomainFFT;
 import org.ll.heart.sound.recognition.fdomain.FrequencyDomainService;
+import org.ll.heart.sound.recognition.filter.FilterBandpass;
+import org.ll.heart.sound.recognition.filter.FilterService;
 import org.ll.heart.sound.recognition.spectrogram.PixelARGB;
 import org.ll.heart.sound.recognition.wav.WavFile;
 import org.ll.heart.sound.recognition.wav.WavFileException;
@@ -32,7 +34,8 @@ public class PCGWrapper {
     private final double[] data;
     private final List<SignalPortion> PCG = new ArrayList<>();
     
-    private FrequencyDomainService fservie;
+    private FrequencyDomainService freqService;
+    private FilterService filterService;
     
     public PCGWrapper(File in, Options options) throws IOException, WavFileException {
         this.options = options;
@@ -111,10 +114,15 @@ public class PCGWrapper {
     //Configure services for transorm to frequency domain, filtration and segmentation
     private void configure() {
         setFrequencyService(new FrequencyDomainFFT());
+        setFilterService(new FilterBandpass());
     }
     
     private void setFrequencyService(FrequencyDomainService fservie) {
-        this.fservie = fservie;
+        this.freqService = fservie;
+    }
+
+    public void setFilterService(FilterService filterService) {
+        this.filterService = filterService;
     }
     
     //main action
@@ -134,7 +142,9 @@ public class PCGWrapper {
             Date ts = new Date((index * 1000) / wavFile.getSampleRate());
             //Create signal portion
             SignalPortion portion = new SignalPortion(ts, data[index], Arrays.copyOfRange(data, i, i + windowSize));
-            fservie.process(portion);
+            freqService.forward(portion);
+            filterService.filter(portion);
+            freqService.inverse(portion);
             PCG.add(portion);
         }
     }
@@ -175,15 +185,7 @@ public class PCGWrapper {
         ImageIO.write(dst, "png", new File(out + ".png"));
     }
     
-      
-        
-        
-
     
-    
-    
-    
-
     public int getWindowSize() {
         return windowSize;
     }

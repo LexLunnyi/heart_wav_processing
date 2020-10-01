@@ -7,6 +7,7 @@ import org.ll.heart.sound.recognition.SignalPortion;
  * @author aberdnikov
  */
 public interface FrequencyDomainService {
-    void process(SignalPortion portion);
-    void process(SignalPortion prev, SignalPortion portion);
+    void forward(SignalPortion portion);
+    void inverse(SignalPortion portion);
+    void forward(SignalPortion prev, SignalPortion portion);
 }

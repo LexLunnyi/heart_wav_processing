@@ -11,7 +11,8 @@ import org.apache.commons.math3.complex.Complex;
 
 enum SignalColumn {
     TIME(0),
-    SIGNAL(1);
+    SIGNAL(1),
+    FILTERED(2);
     
     int index;
 
@@ -29,6 +30,7 @@ enum SignalColumn {
 public class SignalPortion {
     Date ts;
     double source;
+    double filtered;
     double[] in;
     double[] out;
     Complex[] spectrum;
@@ -42,7 +44,7 @@ public class SignalPortion {
     }
     
     public String toCSV() {
-        return ts.getTime() + ";" + source + "\n";
+        return ts.getTime() + ";" + source + ";" + filtered + "\n";
     }
 
     public double[] getIn() {
@@ -56,13 +58,17 @@ public class SignalPortion {
     public void setSpectrum(Complex[] spectrum) {
         this.spectrum = spectrum;
     }
+
+    public void setFiltered(double filtered) {
+        this.filtered = filtered;
+    }
     
     public String getCSVColumnsNames(boolean sourceOnly) {
         StringBuilder sbuf = new StringBuilder();
         sbuf.append(WavColumn.TIME.name()).append(";");
         sbuf.append(WavColumn.SIGNAL.name());
         if (!sourceOnly) {
-//            sbuf.append(";").append(WavColumn.FILTRED.name()).append(";");
+            sbuf.append(";").append(WavColumn.FILTRED.name());
 //            sbuf.append(WavColumn.MAGNITUDE.name()).append(";");
 //            sbuf.append(WavColumn.SX.name()).append(";");
 //            sbuf.append(WavColumn.HARMONIC_INDEX.name()).append(";");

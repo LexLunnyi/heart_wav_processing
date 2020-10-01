@@ -11,7 +11,7 @@ class Options():
 class Columns():
     TIME                         = 0
     SIGNAL                       = 1
-#    FILTRED                      = 2
+    FILTRED                      = 2
 #    MAGNITUDE                    = 3
 #    SX                           = 4
 #    MAX_HARMONIC_INDEX           = 5
@@ -44,7 +44,7 @@ class Figure():
         plt.rcParams["legend.loc"] = 'upper right'
         
         plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SIGNAL], label='SIGNAL')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.FILTRED], label='FILTRED')
+        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.FILTRED], label='FILTRED')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDE], label='MAGNITUDE')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAX_HARMONIC_INDEX], label='MAX-HARMONIC-INDEX')
