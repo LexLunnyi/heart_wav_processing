@@ -12,7 +12,7 @@ class Columns():
     TIME                         = 0
     SIGNAL                       = 1
     FILTRED                      = 2
-#    MAGNITUDE                    = 3
+    MAGNITUDE                    = 3
 #    SX                           = 4
 #    MAX_HARMONIC_INDEX           = 5
 #    SQUARE_SEMI_WAVE             = 6
@@ -45,7 +45,7 @@ class Figure():
         
         plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SIGNAL], label='SIGNAL')
         plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.FILTRED], label='FILTRED')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDE], label='MAGNITUDE')
+        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDE], label='MAGNITUDE')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAX_HARMONIC_INDEX], label='MAX-HARMONIC-INDEX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SQUARE_SEMI_WAVE], label='SQUARE-SEMI-WAVE')

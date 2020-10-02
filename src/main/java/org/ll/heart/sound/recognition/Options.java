@@ -25,6 +25,8 @@ public class Options {
     int wavLengthMin;
     int wavLengthMax;
     boolean appSpectrogramSave;
+    int appPcgHigh;
+    boolean appPcgNarrow;
     List<HeartSoundCategory> categories = new ArrayList();
     
     public Options(String path) {
@@ -36,14 +38,20 @@ public class Options {
             prop.load(input);
             // get the property value and print it out
             appSpectrogramSave = Boolean.parseBoolean(prop.getProperty("app.spectrogram.save"));
+            appPcgNarrow = Boolean.parseBoolean(prop.getProperty("app.pcg.narrow"));
+            appPcgHigh = Integer.parseInt(prop.getProperty("app.pcg.high"));
+            
             windowSize = Integer.parseInt(prop.getProperty("window.size"));
             windowStep = Integer.parseInt(prop.getProperty("window.step"));
             windowAuto = Boolean.parseBoolean(prop.getProperty("window.auto"));
             windowFrequencyRate = Integer.parseInt(prop.getProperty("window.frequency.rate"));
+            
             bandpassLow = Double.parseDouble(prop.getProperty("bandpass.low"));
             bandpassHight = Double.parseDouble(prop.getProperty("bandpass.hight"));
+            
             inputDir = prop.getProperty("data.input.dir");
             outputDir = prop.getProperty("data.output.dir");
+            
             wavLengthLimited = Boolean.parseBoolean(prop.getProperty("wav.length.limited"));
             wavLengthMin = Integer.parseInt(prop.getProperty("wav.length.min"));
             wavLengthMax = Integer.parseInt(prop.getProperty("wav.length.max"));
@@ -77,6 +85,9 @@ public class Options {
         System.out.println("OPTIONS: ");
         System.out.println("  ");
         System.out.println("  appSpectrogramSave -> " + Boolean.toString(appSpectrogramSave));
+        System.out.println("  appPcgNarrow -> " + Boolean.toString(appPcgNarrow));
+        System.out.println("  appPcgHigh -> " + Integer.toString(appPcgHigh));
+        System.out.println("  ");
         System.out.println("  windowSize -> " + Integer.toString(windowSize));
         System.out.println("  windowStep -> " + Integer.toString(windowStep));
         System.out.println("  windowAuto -> " + Boolean.toString(windowAuto));
@@ -153,5 +164,13 @@ public class Options {
 
     public boolean isAppSpectrogramSave() {
         return appSpectrogramSave;
+    }
+
+    public int getAppPcgHigh() {
+        return appPcgHigh;
+    }
+
+    public boolean isAppPcgNarrow() {
+        return appPcgNarrow;
     }
 }

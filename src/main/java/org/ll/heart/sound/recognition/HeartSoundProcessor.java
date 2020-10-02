@@ -44,10 +44,9 @@ public class HeartSoundProcessor {
     }
     
     
-    
     public void processFiles() throws Exception {
         try (FileWriter fileWriter = new FileWriter(options.getOutputDir() + "/output.csv")) {
-            String resRow = "INDEX;GROUP;PATH;FILE;SAMPLE_RATE;CHANNELS;WINDOW_SIZE\n";
+            String resRow = "INDEX;GROUP;PATH;FILE;SAMPLE_RATE;WINDOW_SIZE\n";
             fileWriter.write(resRow);
             int index = 1;
 
@@ -58,10 +57,8 @@ public class HeartSoundProcessor {
                 for (String file : files) {
                     System.out.print("FILE: " + file + "\n");
                     PCGWrapper wrapper = processFile(hsc.getPath(), file);
-                    WavFile header = wrapper.getWavFile();
                     resRow = Integer.toString(index) + ";" + Integer.toString(hsc.getIndex()) + ";" + hsc.getPath() + ";" + file + ".csv;" + 
-                             Long.toString(header.getSampleRate()) + ";" + Integer.toString(header.getNumChannels()) + ";" +
-                             Integer.toString(wrapper.getWindowSize()) + "\n";
+                             Double.toString(wrapper.getSampleRate()) + ";" + Integer.toString(wrapper.getWindowSize()) + "\n";
                     fileWriter.write(resRow);
                     index++;
                 }

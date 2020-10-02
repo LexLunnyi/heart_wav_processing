@@ -12,7 +12,7 @@ import org.ll.heart.sound.recognition.SignalPortion;
  */
 public class FrequencyDomainFFT implements FrequencyDomainService {
 
-    private final FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.UNITARY);
+    private final FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
 
     public FrequencyDomainFFT() {
     }
@@ -24,14 +24,19 @@ public class FrequencyDomainFFT implements FrequencyDomainService {
 
     @Override
     public void inverse(SignalPortion portion) {
-        Complex[] out = transformer.transform(portion.getSpectrum(), TransformType.INVERSE);
+        Complex[] s = portion.getSpectrum();
+        Complex[] out = transformer.transform(s, TransformType.INVERSE);
         Complex val = out[out.length / 2];
-
         if (val.getReal() < 0) {
             portion.setFiltered(val.abs() * (-1.0));
         } else {
             portion.setFiltered(val.abs());
         }
+        Complex m = new Complex(0);
+        for(Complex g : s) {
+            m = m.add(g);
+        }
+        portion.setMagnitude(m.abs());
     }
 
     @Override
