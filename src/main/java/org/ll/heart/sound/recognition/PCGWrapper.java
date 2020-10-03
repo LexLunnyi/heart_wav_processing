@@ -40,6 +40,7 @@ public class PCGWrapper {
 
     FrequencyDomainService freqService;
     FilterService filterService;
+    final Normalizer normalizer = new Normalizer();
 
     public PCGWrapper(File in, Options options) throws IOException, WavFileException {
         this.options = options;
@@ -117,9 +118,9 @@ public class PCGWrapper {
 
     //Configure services for transorm to frequency domain, filtration and segmentation
     private void configure() {
-        setFrequencyService(new FrequencyDomainFFT());
-        //setFilterService(new FilterBandpass(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
-        setFilterService(new FilterBlank());
+        setFrequencyService(new FrequencyDomainFFT(getSampleRate(), getWindowSize()));
+        setFilterService(new FilterBandpass(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
+        //setFilterService(new FilterBlank());
     }
 
     private void setFrequencyService(FrequencyDomainService fservie) {
@@ -139,19 +140,25 @@ public class PCGWrapper {
         if (end <= start) {
             throw new IOException("The start point or end point is incorrect");
         }
-
+        
+        SignalPortion prev = null;
         for (int i = start; i < end; i++) {
-            //We take midle element of the window
-            int index = i + windowSize / 2;
             //Calc time
-            Date ts = new Date((long) ((index * 1000) / getSampleRate()));
+            Date ts = new Date((long) ((i * 1000) / getSampleRate()));
             //Create signal portion
-            SignalPortion portion = new SignalPortion(ts, data[index], Arrays.copyOfRange(data, i, i + windowSize));
+            SignalPortion portion = new SignalPortion(i, ts, data[i], Arrays.copyOfRange(data, i, i + windowSize));
             freqService.forward(portion);
             filterService.filter(portion);
+            if (prev != null) {
+                freqService.features(prev, portion);
+            }
             freqService.inverse(portion);
+            normalizer.calc(portion);
             PCG.add(portion);
+            prev = portion;
         }
+        
+        PCG.forEach(s -> {normalizer.norm(s);});
     }
 
     private void save(String out) throws IOException {

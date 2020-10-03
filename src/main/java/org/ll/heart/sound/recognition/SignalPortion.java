@@ -10,10 +10,12 @@ import org.apache.commons.math3.complex.Complex;
 
 
 enum SignalColumn {
-    TIME(0),
-    SIGNAL(1),
-    FILTRED(2),
-    MAGNITUDE(3);
+    ID(0),
+    TIME(1),
+    SIGNAL(2),
+    FILTRED(3),
+    MAGNITUDE(4),
+    M_FREQ(5);
     
     int index;
 
@@ -29,26 +31,31 @@ enum SignalColumn {
 
 
 public class SignalPortion {
+    int id;
     Date ts;
     double source;
     double filtered;
     double magnitude;
+    double Mfreq;
     double[] in;
     double[] out;
     Complex[] spectrum;
     
     
-    public SignalPortion(Date ts, double src, double[] in) {
+    public SignalPortion(int id, Date ts, double src, double[] in) {
+        this.id = id;
         this.in = in;
         this.ts = ts;
         this.source = src;
         this.in = in;
         this.filtered = 0.0;
         this.magnitude = 0.0;
+        this.Mfreq = 0.0;
     }
     
     public String toCSV() {
-        return ts.getTime() + ";" + source + ";" + filtered + ";" + magnitude + "\n";
+        return id + ";" + ts.getTime() + ";" + source + ";" + filtered + ";" + 
+               magnitude + ";" + Mfreq + "\n";
     }
 
     public double[] getIn() {
@@ -70,14 +77,40 @@ public class SignalPortion {
     public void setMagnitude(double magnitude) {
         this.magnitude = magnitude;
     }
+
+    public double getSource() {
+        return source;
+    }
+
+    public double getFiltered() {
+        return filtered;
+    }
+
+    public double getMagnitude() {
+        return magnitude;
+    }
+
+    public void setSource(double source) {
+        this.source = source;
+    }
+
+    public double getMfreq() {
+        return Mfreq;
+    }
+
+    public void setMfreq(double Mfreq) {
+        this.Mfreq = Mfreq;
+    }
     
     public String getCSVColumnsNames(boolean sourceOnly) {
         StringBuilder sbuf = new StringBuilder();
+        sbuf.append(SignalColumn.ID.name()).append(";");
         sbuf.append(SignalColumn.TIME.name()).append(";");
         sbuf.append(SignalColumn.SIGNAL.name());
         if (!sourceOnly) {
             sbuf.append(";").append(SignalColumn.FILTRED.name()).append(";");
-            sbuf.append(SignalColumn.MAGNITUDE.name());
+            sbuf.append(SignalColumn.MAGNITUDE.name()).append(";");
+            sbuf.append(SignalColumn.M_FREQ.name());
 //            sbuf.append(SignalColumn.SX.name()).append(";");
 //            sbuf.append(SignalColumn.HARMONIC_INDEX.name()).append(";");
 //            sbuf.append(SignalColumn.SQUARE_SEMI_WAVE.name()).append(";");

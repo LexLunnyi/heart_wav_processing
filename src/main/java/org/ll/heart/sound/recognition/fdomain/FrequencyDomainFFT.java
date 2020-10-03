@@ -11,10 +11,13 @@ import org.ll.heart.sound.recognition.SignalPortion;
  * @author aberdnikov
  */
 public class FrequencyDomainFFT implements FrequencyDomainService {
+    final FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
+    final double sampleRate;
+    final double freqStep;
 
-    private final FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
-
-    public FrequencyDomainFFT() {
+    public FrequencyDomainFFT(double sampleRate, double windowSize) {
+        this.sampleRate = sampleRate;
+        this.freqStep = sampleRate / windowSize;
     }
 
     @Override
@@ -24,23 +27,34 @@ public class FrequencyDomainFFT implements FrequencyDomainService {
 
     @Override
     public void inverse(SignalPortion portion) {
-        Complex[] s = portion.getSpectrum();
-        Complex[] out = transformer.transform(s, TransformType.INVERSE);
-        Complex val = out[out.length / 2];
+        Complex[] out = transformer.transform(portion.getSpectrum(), TransformType.INVERSE);
+        Complex val = out[0];
         if (val.getReal() < 0) {
             portion.setFiltered(val.abs() * (-1.0));
         } else {
             portion.setFiltered(val.abs());
         }
-        Complex m = new Complex(0);
-        for(Complex g : s) {
-            m = m.add(g);
-        }
-        portion.setMagnitude(m.abs());
     }
 
     @Override
-    public void forward(SignalPortion prev, SignalPortion portion) {
-        ///return portion;
+    public void features(SignalPortion prev, SignalPortion portion) {
+        Complex[] sCur = portion.getSpectrum();
+        Complex[] sPrev = prev.getSpectrum();
+        int size = sCur.length;
+        
+        Complex m = new Complex(0);
+        double Mfreq = 0.0;
+        
+        //note detection algorithm
+        //for (int i = 0; i < size/2; i++) {
+        //    Complex diff = sPrev[i].subtract(sCur[i]); 
+        //    m = m.add(diff);
+        //}
+        for (int i = 0; i < size/2; i++) {
+            m = m.add(sCur[i]);
+            Mfreq += (i + 1) * freqStep * sCur[i].abs();
+        }
+        portion.setMagnitude(m.abs());
+        portion.setMfreq(Mfreq);
     }
 }
