@@ -15,7 +15,7 @@ class Columns():
     FILTRED                      = 3
     MAGNITUDE                    = 4
     M_FREQ                       = 5
-#    SX                           = 4
+    SX                           = 6
 #    MAX_HARMONIC_INDEX           = 5
 #    SQUARE_SEMI_WAVE             = 6
 #    WINDOWS_ENERGY               = 7
@@ -48,8 +48,8 @@ class Figure():
         plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SIGNAL], label='SIGNAL')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.FILTRED], label='FILTRED')
         plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDE], label='MAGNITUDE')
-        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.M_FREQ], label='M_FREQ')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.M_FREQ], label='M_FREQ')
+        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAX_HARMONIC_INDEX], label='MAX-HARMONIC-INDEX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SQUARE_SEMI_WAVE], label='SQUARE-SEMI-WAVE')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.WINDOWS_ENERGY], label='WINDOWS-ENERGY')

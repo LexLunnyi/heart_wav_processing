@@ -15,7 +15,8 @@ enum SignalColumn {
     SIGNAL(2),
     FILTRED(3),
     MAGNITUDE(4),
-    M_FREQ(5);
+    M_FREQ(5),
+    SX(6);
     
     int index;
 
@@ -37,6 +38,8 @@ public class SignalPortion {
     double filtered;
     double magnitude;
     double Mfreq;
+    boolean sx;
+    
     double[] in;
     double[] out;
     Complex[] spectrum;
@@ -51,11 +54,13 @@ public class SignalPortion {
         this.filtered = 0.0;
         this.magnitude = 0.0;
         this.Mfreq = 0.0;
+        this.sx = false;
     }
     
     public String toCSV() {
+        String SX = (sx)?"1":"0";
         return id + ";" + ts.getTime() + ";" + source + ";" + filtered + ";" + 
-               magnitude + ";" + Mfreq + "\n";
+               magnitude + ";" + Mfreq + ";" + SX + "\n";
     }
 
     public double[] getIn() {
@@ -101,6 +106,14 @@ public class SignalPortion {
     public void setMfreq(double Mfreq) {
         this.Mfreq = Mfreq;
     }
+
+    public boolean isSx() {
+        return sx;
+    }
+
+    public void setSx(boolean sx) {
+        this.sx = sx;
+    }
     
     public String getCSVColumnsNames(boolean sourceOnly) {
         StringBuilder sbuf = new StringBuilder();
@@ -110,8 +123,8 @@ public class SignalPortion {
         if (!sourceOnly) {
             sbuf.append(";").append(SignalColumn.FILTRED.name()).append(";");
             sbuf.append(SignalColumn.MAGNITUDE.name()).append(";");
-            sbuf.append(SignalColumn.M_FREQ.name());
-//            sbuf.append(SignalColumn.SX.name()).append(";");
+            sbuf.append(SignalColumn.M_FREQ.name()).append(";");;
+            sbuf.append(SignalColumn.SX.name());
 //            sbuf.append(SignalColumn.HARMONIC_INDEX.name()).append(";");
 //            sbuf.append(SignalColumn.SQUARE_SEMI_WAVE.name()).append(";");
 //            sbuf.append(SignalColumn.WINDOWS_ENERGY.name()).append(";");

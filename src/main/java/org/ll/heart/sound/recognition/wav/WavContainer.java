@@ -12,7 +12,7 @@ import org.apache.commons.math3.transform.DftNormalization;
 import org.apache.commons.math3.transform.FastFourierTransformer;
 import org.apache.commons.math3.transform.TransformType;
 import org.ll.heart.sound.recognition.HeartSoundPortion;
-import org.ll.heart.sound.recognition.MagnitudeHistogram;
+import org.ll.heart.sound.recognition.utils.NormalizedHistogram;
 import org.ll.heart.sound.recognition.Options;
 import org.ll.heart.sound.recognition.SxNode;
 import org.ll.heart.sound.recognition.WindowParams;
@@ -37,7 +37,7 @@ public class WavContainer {
     private final WindowingAdaptor wAdaptor = new WindowingAdaptor();
 
     private final FastFourierTransformer transformer = new FastFourierTransformer(DftNormalization.STANDARD);
-    private final MagnitudeHistogram mHisto;
+    private final NormalizedHistogram mHisto;
     private final Options options;
     private final Date WAV_LIMIT_BEGIN;
     private final Date WAV_LIMIT_END;
@@ -77,7 +77,7 @@ public class WavContainer {
             this.WINDOW_SIZE = options.getWindowSize();
             this.WINDOW_STEP = options.getWindowStep();
         }
-        this.mHisto = new MagnitudeHistogram(WINDOW_SIZE, HIST_THRES_MAGNITUDE);
+        this.mHisto = new NormalizedHistogram(WINDOW_SIZE, HIST_THRES_MAGNITUDE);
         freqStep = (double) wavFile.getSampleRate() / (double) WINDOW_SIZE;
         // Create a buffer of N frames
         double[] buffer = new double[WINDOW_SIZE * numChannels];
@@ -417,8 +417,8 @@ public class WavContainer {
         sxDetection(true);
         System.out.println("Nodes size: " + nodes.size() + "\n");
         //Собираем гистограммы по длительности и энергии
-        MagnitudeHistogram magHist = new MagnitudeHistogram(16, 0.5D);
-        MagnitudeHistogram durHist = new MagnitudeHistogram(16, 0.5D);
+        NormalizedHistogram magHist = new NormalizedHistogram(16, 0.5D);
+        NormalizedHistogram durHist = new NormalizedHistogram(16, 0.5D);
         for (SxNode sxNode : nodes) {
             magHist.push(sxNode.getMaxMagnitude());
             durHist.push(sxNode.getRelativeDuration());

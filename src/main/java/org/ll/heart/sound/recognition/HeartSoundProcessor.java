@@ -5,7 +5,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.ll.heart.sound.recognition.wav.WavFile;
 import org.ll.heart.sound.recognition.wav.WavFileException;
 
 /**

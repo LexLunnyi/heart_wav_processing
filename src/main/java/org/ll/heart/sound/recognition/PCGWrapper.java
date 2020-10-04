@@ -1,5 +1,6 @@
 package org.ll.heart.sound.recognition;
 
+import org.ll.heart.sound.recognition.utils.Normalizer;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
@@ -15,6 +16,9 @@ import org.ll.heart.sound.recognition.fdomain.FrequencyDomainService;
 import org.ll.heart.sound.recognition.filter.FilterBandpass;
 import org.ll.heart.sound.recognition.filter.FilterBlank;
 import org.ll.heart.sound.recognition.filter.FilterService;
+import org.ll.heart.sound.recognition.segmentation.SegmentationService;
+import org.ll.heart.sound.recognition.segmentation.SegmentationThreshold;
+import org.ll.heart.sound.recognition.segmentation.SegmentationType;
 import org.ll.heart.sound.recognition.spectrogram.PixelARGB;
 import org.ll.heart.sound.recognition.wav.WavFile;
 import org.ll.heart.sound.recognition.wav.WavFileException;
@@ -40,6 +44,8 @@ public class PCGWrapper {
 
     FrequencyDomainService freqService;
     FilterService filterService;
+    SegmentationService segmentService;
+    
     final Normalizer normalizer = new Normalizer();
 
     public PCGWrapper(File in, Options options) throws IOException, WavFileException {
@@ -131,6 +137,10 @@ public class PCGWrapper {
         this.filterService = filterService;
     }
 
+    public void setSegmentService(SegmentationService segmentService) {
+        this.segmentService = segmentService;
+    }
+
     //main action
     private void process() throws IOException {
         PCG.clear();
@@ -158,7 +168,12 @@ public class PCGWrapper {
             prev = portion;
         }
         
-        PCG.forEach(s -> {normalizer.norm(s);});
+        setSegmentService(new SegmentationThreshold(SegmentationType.MAGNITUDE_THRESHOLD, normalizer.getMagnitudeThreshold()));
+        
+        for(SignalPortion s : PCG) {
+            segmentService.process(s);
+            normalizer.norm(s);
+        }
     }
 
     private void save(String out) throws IOException {
