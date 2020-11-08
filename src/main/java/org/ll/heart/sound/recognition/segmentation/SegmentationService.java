@@ -8,4 +8,5 @@ import org.ll.heart.sound.recognition.SignalPortion;
  */
 public interface SegmentationService {
     void process(SignalPortion portion);
+    void finish();
 }

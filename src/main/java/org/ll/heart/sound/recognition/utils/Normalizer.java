@@ -10,8 +10,8 @@ import org.ll.heart.sound.recognition.SignalPortion;
  * @author aberdnikov
  */
 public class Normalizer {
-    final int HIST_SIZE = 512;
-    final double HIST_THRES = 0.25D;
+    final int HIST_SIZE = 2048;
+    final double HIST_THRES = 0.001;
     
     final SignalPortion max = new SignalPortion(0, new Date(0), 0, null);
     final NormalizedHistogram mHist = new NormalizedHistogram(HIST_SIZE, HIST_THRES);

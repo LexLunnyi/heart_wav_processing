@@ -7,12 +7,12 @@ import org.ll.heart.sound.recognition.SignalPortion;
  *
  * @author aberdnikov
  */
-public class FilterBandpass implements FilterService {
+public class BandpassFilter implements FilterService {
     final double freqStep;
     final double low;
     final double hight;
 
-    public FilterBandpass(double freqStep, double low, double hight) {
+    public BandpassFilter(double freqStep, double low, double hight) {
         this.freqStep = freqStep;
         this.low = low;
         this.hight = hight;
@@ -24,7 +24,7 @@ public class FilterBandpass implements FilterService {
         int size = s.length;
 
         //String row = tsFormat.format(curPortion.getTs()) + ";";
-        for (int i = 0; i < size / 2; i++) {
+        for (int i = 1; i < size / 2; i++) {
             double curFreq = i * freqStep;
             //Make bandpass filtration
             if ((curFreq <= low) || (curFreq >= hight)) {

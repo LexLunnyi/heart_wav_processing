@@ -11,14 +11,12 @@ import java.util.Date;
 import java.util.List;
 import javax.imageio.ImageIO;
 import org.apache.commons.math3.complex.Complex;
-import org.ll.heart.sound.recognition.fdomain.FrequencyDomainFFT;
+import org.ll.heart.sound.recognition.fdomain.FFTFrequencyDomain;
 import org.ll.heart.sound.recognition.fdomain.FrequencyDomainService;
-import org.ll.heart.sound.recognition.filter.FilterBandpass;
-import org.ll.heart.sound.recognition.filter.FilterBlank;
+import org.ll.heart.sound.recognition.filter.BandpassFilter;
 import org.ll.heart.sound.recognition.filter.FilterService;
+import org.ll.heart.sound.recognition.segmentation.MeanSegmentation;
 import org.ll.heart.sound.recognition.segmentation.SegmentationService;
-import org.ll.heart.sound.recognition.segmentation.SegmentationThreshold;
-import org.ll.heart.sound.recognition.segmentation.SegmentationType;
 import org.ll.heart.sound.recognition.spectrogram.PixelARGB;
 import org.ll.heart.sound.recognition.wav.WavFile;
 import org.ll.heart.sound.recognition.wav.WavFileException;
@@ -124,9 +122,9 @@ public class PCGWrapper {
 
     //Configure services for transorm to frequency domain, filtration and segmentation
     private void configure() {
-        setFrequencyService(new FrequencyDomainFFT(getSampleRate(), getWindowSize()));
-        setFilterService(new FilterBandpass(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
-        //setFilterService(new FilterBlank());
+        setFrequencyService(new FFTFrequencyDomain(getSampleRate(), getWindowSize()));
+        setFilterService(new BandpassFilter(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
+        setSegmentService(new MeanSegmentation(SignalPortion::getMagnitude, windowSize));
     }
 
     private void setFrequencyService(FrequencyDomainService fservie) {
@@ -151,7 +149,7 @@ public class PCGWrapper {
             throw new IOException("The start point or end point is incorrect");
         }
         
-        SignalPortion prev = null;
+        //SignalPortion prev = null;
         for (int i = start; i < end; i++) {
             //Calc time
             Date ts = new Date((long) ((i * 1000) / getSampleRate()));
@@ -159,21 +157,16 @@ public class PCGWrapper {
             SignalPortion portion = new SignalPortion(i, ts, data[i], Arrays.copyOfRange(data, i, i + windowSize));
             freqService.forward(portion);
             filterService.filter(portion);
-            if (prev != null) {
-                freqService.features(prev, portion);
-            }
+            freqService.features(portion);
             freqService.inverse(portion);
-            normalizer.calc(portion);
+            segmentService.process(portion);
             PCG.add(portion);
-            prev = portion;
-        }
+            //prev = portion;
+        }        
+        segmentService.finish();
         
-        setSegmentService(new SegmentationThreshold(SegmentationType.MAGNITUDE_THRESHOLD, normalizer.getMagnitudeThreshold()));
-        
-        for(SignalPortion s : PCG) {
-            segmentService.process(s);
-            normalizer.norm(s);
-        }
+        PCG.forEach(s -> {normalizer.calc(s);});
+        PCG.forEach(s -> {normalizer.norm(s);});
     }
 
     private void save(String out) throws IOException {

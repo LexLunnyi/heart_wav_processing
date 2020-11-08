@@ -16,7 +16,9 @@ enum SignalColumn {
     FILTRED(3),
     MAGNITUDE(4),
     M_FREQ(5),
-    SX(6);
+    STAT_MEAN(6),
+    STAT_SD(7),
+    SX(8);
     
     int index;
 
@@ -39,6 +41,10 @@ public class SignalPortion {
     double magnitude;
     double Mfreq;
     boolean sx;
+    double magnitudeMean;
+    double mfreqMean;
+    double magnitudeSD;
+    double mfreqSD;
     
     double[] in;
     double[] out;
@@ -51,16 +57,22 @@ public class SignalPortion {
         this.ts = ts;
         this.source = src;
         this.in = in;
-        this.filtered = 0.0;
-        this.magnitude = 0.0;
-        this.Mfreq = 0.0;
-        this.sx = false;
+        
+        filtered = 0.0;
+        magnitude = 0.0;
+        Mfreq = 0.0;
+        sx = false;
+        magnitudeMean = 0.0;
+        mfreqMean = 0.0;
+        magnitudeSD = 0.0;
+        mfreqSD = 0.0;
     }
     
     public String toCSV() {
         String SX = (sx)?"1":"0";
         return id + ";" + ts.getTime() + ";" + source + ";" + filtered + ";" + 
-               magnitude + ";" + Mfreq + ";" + SX + "\n";
+               magnitude + ";" + Mfreq + ";" + magnitudeMean + ";" + 
+               magnitudeSD + ";" + SX + "\n";
     }
 
     public double[] getIn() {
@@ -123,18 +135,10 @@ public class SignalPortion {
         if (!sourceOnly) {
             sbuf.append(";").append(SignalColumn.FILTRED.name()).append(";");
             sbuf.append(SignalColumn.MAGNITUDE.name()).append(";");
-            sbuf.append(SignalColumn.M_FREQ.name()).append(";");;
+            sbuf.append(SignalColumn.M_FREQ.name()).append(";");
+            sbuf.append(SignalColumn.STAT_MEAN.name()).append(";");
+            sbuf.append(SignalColumn.STAT_SD.name()).append(";");
             sbuf.append(SignalColumn.SX.name());
-//            sbuf.append(SignalColumn.HARMONIC_INDEX.name()).append(";");
-//            sbuf.append(SignalColumn.SQUARE_SEMI_WAVE.name()).append(";");
-//            sbuf.append(SignalColumn.WINDOWS_ENERGY.name()).append(";");
-//            sbuf.append(SignalColumn.TIME_FROM_CHANGE_POINT.name()).append(";");
-//            sbuf.append(SignalColumn.TIME_FROM_INFLECTION_POINT.name()).append(";");
-//            sbuf.append(SignalColumn.MAGNITUDES_ANGLE.name()).append(";");
-//            sbuf.append(SignalColumn.WINDOW_CHANGE_POINTS_CNT.name()).append(";");
-//            sbuf.append(SignalColumn.WINDOW_INFLECTION_POINTS_CNT.name()).append(";");
-//            sbuf.append(SignalColumn.FIRST_DERIVATIVE.name()).append(";");
-//            sbuf.append(SignalColumn.SECOND_DERIVATIVE.name());
         }
         return sbuf.toString();
     }

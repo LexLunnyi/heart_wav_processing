@@ -1,7 +1,12 @@
 package org.ll.heart.sound.recognition.utils;
 
+import java.util.Arrays;
+
 /**
  * !!!! FOR NORMALIZED VALUES ONLY !!!!
+ * 
+ * It is a problem to use such kind of normalizer because it is impossible
+ * to wait for full record. The interval (0, 1) must be changed
  */
 public class NormalizedHistogram {
     final double divider;
@@ -13,6 +18,7 @@ public class NormalizedHistogram {
         this.divider = divider;
         this.size = size;
         this.counters = new int[size];
+        Arrays.fill(counters, 0);
     }
     
     public void push(double magnitude) {

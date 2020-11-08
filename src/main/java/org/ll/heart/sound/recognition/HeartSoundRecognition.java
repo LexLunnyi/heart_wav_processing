@@ -1,7 +1,6 @@
 package org.ll.heart.sound.recognition;
 
 /**
- *
  * @author aberdnikov
  */
 public class HeartSoundRecognition {
@@ -11,6 +10,7 @@ public class HeartSoundRecognition {
             processor.processFiles();
         } catch (Exception e) {
             System.err.println(e);
+            e.printStackTrace();
         }
     }
 }

@@ -62,6 +62,8 @@ public class HeartSoundProcessor {
                     index++;
                 }
             }
+        } catch(Exception e) {
+            throw e;
         }
     }
 }

@@ -6,7 +6,7 @@ import org.ll.heart.sound.recognition.SignalPortion;
  *
  * @author aberdnikov
  */
-public class FilterBlank implements FilterService {
+public class BlankFilter implements FilterService {
     @Override
     public void filter(SignalPortion portion) {
     }

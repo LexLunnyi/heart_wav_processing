@@ -9,5 +9,6 @@ import org.ll.heart.sound.recognition.SignalPortion;
 public interface FrequencyDomainService {
     void forward(SignalPortion portion);
     void inverse(SignalPortion portion);
+    void features(SignalPortion portion);
     void features(SignalPortion prev, SignalPortion portion);
 }
