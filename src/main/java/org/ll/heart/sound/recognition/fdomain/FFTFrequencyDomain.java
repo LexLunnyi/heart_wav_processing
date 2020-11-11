@@ -54,6 +54,12 @@ public class FFTFrequencyDomain implements FrequencyDomainService {
     
     @Override
     public void features(SignalPortion prev, SignalPortion portion) {
+        if (null == prev) {
+            portion.setMagnitude(0.0);
+            portion.setMfreq(0.0);
+            return;
+        }
+        
         Complex[] sCur = portion.getSpectrum();
         Complex[] sPrev = prev.getSpectrum();
         int size = sCur.length;

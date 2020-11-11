@@ -2,20 +2,22 @@ package org.ll.heart.sound.recognition.segmentation;
 
 import java.util.Iterator;
 import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.ll.heart.sound.recognition.SignalPortion;
 
 /**
  *
  * @author aberdnikov
  */
-public abstract class ThresholdSegmentation implements SegmentationService {
-    final private Queue<SignalPortion> window = new LinkedBlockingQueue<>();
-    final private Iterator<SignalPortion> iter = window.iterator();
+public abstract class WindowSegmentation implements SegmentationService {
+    final private Queue<SignalPortion> window;
+    final private Iterator<SignalPortion> iter;
     final private int windowSize;
     private boolean started = false;
     
-    public ThresholdSegmentation(int windowSize) throws IllegalArgumentException {
+    public WindowSegmentation(int windowSize) throws IllegalArgumentException {
+        window = new CircularFifoQueue<>(windowSize+1);
+        iter = window.iterator();
         this.windowSize = windowSize;
         int half = windowSize / 2;
         if (windowSize != half*2) {
@@ -25,7 +27,7 @@ public abstract class ThresholdSegmentation implements SegmentationService {
 
     @Override
     public final void process(SignalPortion portion) throws IllegalStateException {
-        if (window.size() <= windowSize) {
+        if (window.size() >= windowSize) {
             SignalPortion rpotion = window.remove();
             removeProcess(rpotion);
         }
@@ -48,7 +50,7 @@ public abstract class ThresholdSegmentation implements SegmentationService {
     }
     
     private void markBulk() throws IllegalStateException {
-        int cnt = 0;
+        int cnt = 1;
         while ((iter.hasNext()) && (cnt < windowSize / 2)) {
             markProcess(iter.next());
             cnt++;

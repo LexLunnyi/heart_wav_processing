@@ -15,10 +15,12 @@ enum SignalColumn {
     SIGNAL(2),
     FILTRED(3),
     MAGNITUDE(4),
-    M_FREQ(5),
-    STAT_MEAN(6),
-    STAT_SD(7),
-    SX(8);
+    MFREQ(5),
+    STAT_MAGNITUDE_MEAN(6),
+    STAT_MAGNITUDE_SD(7),
+    STAT_MFREQ_MEAN(8),
+    STAT_MFREQ_SD(9),
+    SX(10);
     
     int index;
 
@@ -41,10 +43,11 @@ public class SignalPortion {
     double magnitude;
     double Mfreq;
     boolean sx;
-    double magnitudeMean;
-    double mfreqMean;
-    double magnitudeSD;
-    double mfreqSD;
+    
+    double statMagnitudeMean;
+    double statMfreqMean;
+    double statMagnitudeSD;
+    double statMfreqSD;
     
     double[] in;
     double[] out;
@@ -61,18 +64,32 @@ public class SignalPortion {
         filtered = 0.0;
         magnitude = 0.0;
         Mfreq = 0.0;
+                
+        statMagnitudeMean = 0.0;
+        statMfreqMean = 0.0;
+        statMagnitudeSD = 0.0;
+        statMfreqSD = 0.0;
+        
         sx = false;
-        magnitudeMean = 0.0;
-        mfreqMean = 0.0;
-        magnitudeSD = 0.0;
-        mfreqSD = 0.0;
     }
     
     public String toCSV() {
         String SX = (sx)?"1":"0";
-        return id + ";" + ts.getTime() + ";" + source + ";" + filtered + ";" + 
-               magnitude + ";" + Mfreq + ";" + magnitudeMean + ";" + 
-               magnitudeSD + ";" + SX + "\n";
+        
+        StringBuilder sbuf = new StringBuilder();
+        sbuf.append(id + ";");
+        sbuf.append(ts.getTime() + ";");
+        sbuf.append(source + ";");
+        sbuf.append(filtered + ";");
+        sbuf.append(magnitude + ";");
+        sbuf.append(Mfreq + ";");
+        sbuf.append(statMagnitudeMean + ";");
+        sbuf.append(statMagnitudeSD + ";");
+        sbuf.append(statMfreqMean + ";");
+        sbuf.append(statMfreqSD + ";");
+        sbuf.append(SX + "\n");
+        
+        return sbuf.toString();
     }
 
     public double[] getIn() {
@@ -126,6 +143,40 @@ public class SignalPortion {
     public void setSx(boolean sx) {
         this.sx = sx;
     }
+
+    public double getStatMagnitudeMean() {
+        return statMagnitudeMean;
+    }
+
+    public void setStatMagnitudeMean(double statMagnitudeMean) {
+        this.statMagnitudeMean = statMagnitudeMean;
+    }
+
+    public double getStatMfreqMean() {
+        return statMfreqMean;
+    }
+
+    public void setStatMfreqMean(double statMfreqMean) {
+        this.statMfreqMean = statMfreqMean;
+    }
+
+    public double getStatMagnitudeSD() {
+        return statMagnitudeSD;
+    }
+
+    public void setStatMagnitudeSD(double statMagnitudeSD) {
+        this.statMagnitudeSD = statMagnitudeSD;
+    }
+
+    public double getStatMfreqSD() {
+        return statMfreqSD;
+    }
+
+    public void setStatMfreqSD(double statMfreqSD) {
+        this.statMfreqSD = statMfreqSD;
+    }
+    
+    
     
     public String getCSVColumnsNames(boolean sourceOnly) {
         StringBuilder sbuf = new StringBuilder();
@@ -135,9 +186,11 @@ public class SignalPortion {
         if (!sourceOnly) {
             sbuf.append(";").append(SignalColumn.FILTRED.name()).append(";");
             sbuf.append(SignalColumn.MAGNITUDE.name()).append(";");
-            sbuf.append(SignalColumn.M_FREQ.name()).append(";");
-            sbuf.append(SignalColumn.STAT_MEAN.name()).append(";");
-            sbuf.append(SignalColumn.STAT_SD.name()).append(";");
+            sbuf.append(SignalColumn.MFREQ.name()).append(";");
+            sbuf.append(SignalColumn.STAT_MAGNITUDE_MEAN.name()).append(";");
+            sbuf.append(SignalColumn.STAT_MAGNITUDE_SD.name()).append(";");
+            sbuf.append(SignalColumn.STAT_MFREQ_MEAN.name()).append(";");
+            sbuf.append(SignalColumn.STAT_MFREQ_SD.name()).append(";");
             sbuf.append(SignalColumn.SX.name());
         }
         return sbuf.toString();

@@ -14,21 +14,12 @@ class Columns():
     SIGNAL                       = 2
     FILTRED                      = 3
     MAGNITUDE                    = 4
-    M_FREQ                       = 5
-    STAT_MEAN                    = 6
-    STAT_SD                      = 7
-    SX                           = 8
-#    MAX_HARMONIC_INDEX           = 5
-#    SQUARE_SEMI_WAVE             = 6
-#    WINDOWS_ENERGY               = 7
-#    TIME_FROM_CHANGE_POINT       = 8
-#    TIME_FROM_INFLECTION_POINT   = 9
-#    MAGNITUDES_ANGLE             = 10
-#    WINDOW_CHANGE_POINTS_CNT     = 11
-#    WINDOW_INFLECTION_POINTS_CNT = 12
-#    FIRST_DERIVATIVE             = 13
-#    SECOND_DERIVATIVE            = 14
-
+    MFREQ                        = 5
+    STAT_MAGNITUDE_MEAN          = 6
+    STAT_MAGNITUDE_SD            = 7
+    STAT_MFREQ_MEAN              = 8
+    STAT_MFREQ_SD                = 9
+    SX                           = 10
 
 class Figure():
     path = ''
@@ -49,11 +40,12 @@ class Figure():
         
         plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SIGNAL], label='SIGNAL')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.FILTRED], label='FILTRED')
-        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDE], label='MAGNITUDE')
-        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.STAT_MEAN], label='STAT_MEAN')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDE], label='MAGNITUDE')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.STAT_MAGNITUDE_MEAN], label='STAT_MAGNITUDE_MEAN')
+#        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.STAT_MAGNITUDE_SD], label='STAT_MAGNITUDE_SD')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.STAT_SD], label='STAT_SD')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.M_FREQ], label='M_FREQ')
-#        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
+        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAX_HARMONIC_INDEX], label='MAX-HARMONIC-INDEX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SQUARE_SEMI_WAVE], label='SQUARE-SEMI-WAVE')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.WINDOWS_ENERGY], label='WINDOWS-ENERGY')

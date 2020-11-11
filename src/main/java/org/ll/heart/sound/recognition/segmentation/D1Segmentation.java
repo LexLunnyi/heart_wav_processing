@@ -7,11 +7,11 @@ import org.ll.heart.sound.recognition.utils.StatisticUnit;
 /**
  * @author aberdnikov
  */
-final public class MeanSegmentation extends ThresholdSegmentation {
+final public class D1Segmentation extends WindowSegmentation {
     final GetValueForStat forStat;
     final StatisticUnit stat = new StatisticUnit();
     
-    public MeanSegmentation(GetValueForStat func, int windowSize) {
+    public D1Segmentation(GetValueForStat func, int windowSize) {
         super(windowSize);
         this.forStat = func;
     }
@@ -28,6 +28,8 @@ final public class MeanSegmentation extends ThresholdSegmentation {
 
     @Override
     protected void markProcess(SignalPortion portion) {
-        portion.setSx(portion.getMagnitude() > stat.getMean());
+        portion.setSx(forStat.get(portion) < (stat.getMean() + stat.getStandartDeviation()));
+        //portion.setStatMagnitudeMean(stat.getMean());
+        //portion.setStatMagnitudeSD(stat.getStandartDeviation());
     }
 }
