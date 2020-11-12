@@ -1,15 +1,15 @@
 package org.ll.heart.sound.recognition.segmentation;
 
 import org.ll.heart.sound.recognition.SignalPortion;
-import org.ll.heart.sound.recognition.utils.StatisticUnit;
+import org.ll.heart.sound.recognition.utils.FIFOStatistic;
 
 /**
  *
  * @author aberdnikov
  */
 public class D2Segmentation extends WindowSegmentation {
-    final StatisticUnit magnitudeStat = new StatisticUnit();
-    final StatisticUnit frequencyStat = new StatisticUnit();
+    final FIFOStatistic magnitudeStat = new FIFOStatistic();
+    final FIFOStatistic frequencyStat = new FIFOStatistic();
 
     public D2Segmentation(int windowSize) throws IllegalArgumentException {
         super(windowSize);
@@ -17,8 +17,8 @@ public class D2Segmentation extends WindowSegmentation {
 
     @Override
     protected void markProcess(SignalPortion portion) {
-        boolean fPart = (portion.getMfreq() < (frequencyStat.getMean() + frequencyStat.getStandartDeviation()));
-        boolean mPart = (portion.getMagnitude() < (magnitudeStat.getMean() + magnitudeStat.getStandartDeviation()));
+        boolean fPart = (portion.getMfreq() > (frequencyStat.getMean() + frequencyStat.getStandardDeviation()));
+        boolean mPart = (portion.getMagnitude() > (magnitudeStat.getMean() + magnitudeStat.getStandardDeviation()));
         portion.setSx(fPart && mPart);
     }
 
@@ -30,8 +30,8 @@ public class D2Segmentation extends WindowSegmentation {
 
     @Override
     protected void removeProcess(SignalPortion portion) {
-        magnitudeStat.subsctract(portion.getMagnitude());
-        frequencyStat.subsctract(portion.getMfreq());
+        magnitudeStat.subtract(portion.getMagnitude());
+        frequencyStat.subtract(portion.getMfreq());
     }
 
 }

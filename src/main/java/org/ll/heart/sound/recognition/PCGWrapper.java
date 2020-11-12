@@ -126,7 +126,7 @@ public class PCGWrapper {
         setFrequencyService(new FFTFrequencyDomain(getSampleRate(), getWindowSize()));
         setFilterService(new BandpassFilter(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
         //setSegmentService(new D1Segmentation(SignalPortion::getMagnitude, windowSize));
-        setSegmentService(new D2Segmentation(windowSize));
+        setSegmentService(new D2Segmentation(windowSize*16));
     }
 
     private void setFrequencyService(FrequencyDomainService fservie) {
