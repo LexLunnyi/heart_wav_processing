@@ -6,6 +6,6 @@ import org.ll.heart.sound.recognition.SignalPortion;
  *
  * @author aberdnikov
  */
-public interface GetValueForStat {
+public interface GetValueFromPortion {
     double get(SignalPortion portion);
 }

@@ -19,7 +19,8 @@ class Columns():
     STAT_MAGNITUDE_SD            = 7
     STAT_MFREQ_MEAN              = 8
     STAT_MFREQ_SD                = 9
-    SX                           = 10
+    THRESHOLD_HISTOGRAM          = 10
+    SX                           = 11
 
 class Figure():
     path = ''
@@ -42,9 +43,10 @@ class Figure():
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.FILTRED], label='FILTRED')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAGNITUDE], label='MAGNITUDE')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.STAT_MAGNITUDE_MEAN], label='STAT_MAGNITUDE_MEAN')
-#        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.STAT_MAGNITUDE_SD], label='STAT_MAGNITUDE_SD')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.STAT_MAGNITUDE_SD], label='STAT_MAGNITUDE_SD')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.STAT_SD], label='STAT_SD')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.M_FREQ], label='M_FREQ')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.THRESHOLD_HISTOGRAM], label='THRESHOLD_HISTOGRAM')
         plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAX_HARMONIC_INDEX], label='MAX-HARMONIC-INDEX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SQUARE_SEMI_WAVE], label='SQUARE-SEMI-WAVE')

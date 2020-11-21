@@ -65,7 +65,7 @@ public abstract class WindowSegmentation implements SegmentationService {
         markBulk();
     }
     
-    protected abstract void markProcess(SignalPortion portion);
+    protected abstract void markProcess(SignalPortion portion) throws IllegalStateException;
 
     protected abstract void addProcess(SignalPortion portion);
     

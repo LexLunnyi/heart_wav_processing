@@ -20,7 +20,8 @@ enum SignalColumn {
     STAT_MAGNITUDE_SD(7),
     STAT_MFREQ_MEAN(8),
     STAT_MFREQ_SD(9),
-    SX(10);
+    THRESHOLD_HISTOGRAM(10),
+    SX(11);
     
     int index;
 
@@ -48,6 +49,7 @@ public class SignalPortion {
     double statMfreqMean;
     double statMagnitudeSD;
     double statMfreqSD;
+    double thresholdHistogram;
     
     double[] in;
     double[] out;
@@ -69,6 +71,7 @@ public class SignalPortion {
         statMfreqMean = 0.0;
         statMagnitudeSD = 0.0;
         statMfreqSD = 0.0;
+        thresholdHistogram = 0.0;
         
         sx = false;
     }
@@ -87,6 +90,7 @@ public class SignalPortion {
         sbuf.append(statMagnitudeSD + ";");
         sbuf.append(statMfreqMean + ";");
         sbuf.append(statMfreqSD + ";");
+        sbuf.append(thresholdHistogram + ";");
         sbuf.append(SX + "\n");
         
         return sbuf.toString();
@@ -175,8 +179,14 @@ public class SignalPortion {
     public void setStatMfreqSD(double statMfreqSD) {
         this.statMfreqSD = statMfreqSD;
     }
-    
-    
+
+    public double getThresholdHistogram() {
+        return thresholdHistogram;
+    }
+
+    public void setThresholdHistogram(double thresholdHistogram) {
+        this.thresholdHistogram = thresholdHistogram;
+    }
     
     public String getCSVColumnsNames(boolean sourceOnly) {
         StringBuilder sbuf = new StringBuilder();
@@ -191,6 +201,7 @@ public class SignalPortion {
             sbuf.append(SignalColumn.STAT_MAGNITUDE_SD.name()).append(";");
             sbuf.append(SignalColumn.STAT_MFREQ_MEAN.name()).append(";");
             sbuf.append(SignalColumn.STAT_MFREQ_SD.name()).append(";");
+            sbuf.append(SignalColumn.THRESHOLD_HISTOGRAM.name()).append(";");
             sbuf.append(SignalColumn.SX.name());
         }
         return sbuf.toString();

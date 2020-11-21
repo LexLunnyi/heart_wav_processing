@@ -17,6 +17,9 @@ import org.ll.heart.sound.recognition.filter.BandpassFilter;
 import org.ll.heart.sound.recognition.filter.FilterService;
 import org.ll.heart.sound.recognition.segmentation.D1Segmentation;
 import org.ll.heart.sound.recognition.segmentation.D2Segmentation;
+import org.ll.heart.sound.recognition.segmentation.HistogramSegmentation;
+import org.ll.heart.sound.recognition.segmentation.LocalMinMaxSegmentation;
+import org.ll.heart.sound.recognition.segmentation.MinMaxSegmentation;
 import org.ll.heart.sound.recognition.segmentation.SegmentationService;
 import org.ll.heart.sound.recognition.spectrogram.PixelARGB;
 import org.ll.heart.sound.recognition.wav.WavFile;
@@ -125,8 +128,13 @@ public class PCGWrapper {
     private void configure() {
         setFrequencyService(new FFTFrequencyDomain(getSampleRate(), getWindowSize()));
         setFilterService(new BandpassFilter(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
+        setSegmentService(new LocalMinMaxSegmentation(SignalPortion::getMagnitude, windowSize, 0.25));
+        //setSegmentService(new MinMaxSegmentation(SignalPortion::getMfreq, windowSize, 0.5));
+        //setSegmentService(new HistogramSegmentation(windowSize, 0.75));
         //setSegmentService(new D1Segmentation(SignalPortion::getMagnitude, windowSize));
-        setSegmentService(new D2Segmentation(windowSize*16));
+        //setSegmentService(new D2Segmentation(windowSize*16));
+        
+        
     }
 
     private void setFrequencyService(FrequencyDomainService fservie) {
