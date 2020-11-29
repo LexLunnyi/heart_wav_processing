@@ -47,7 +47,7 @@ class Figure():
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.STAT_SD], label='STAT_SD')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.M_FREQ], label='M_FREQ')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.THRESHOLD_HISTOGRAM], label='THRESHOLD_HISTOGRAM')
-        plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
+        #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SX], label='SX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.MAX_HARMONIC_INDEX], label='MAX-HARMONIC-INDEX')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.SQUARE_SEMI_WAVE], label='SQUARE-SEMI-WAVE')
         #plt.plot(myFile[:,Columns.TIME], myFile[:, Columns.WINDOWS_ENERGY], label='WINDOWS-ENERGY')

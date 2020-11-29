@@ -13,6 +13,8 @@ import javax.imageio.ImageIO;
 import org.apache.commons.math3.complex.Complex;
 import org.ll.heart.sound.recognition.fdomain.FFTFrequencyDomain;
 import org.ll.heart.sound.recognition.fdomain.FrequencyDomainService;
+import org.ll.heart.sound.recognition.fdomain.HHTFrequencyDomain;
+import org.ll.heart.sound.recognition.fdomain.HHTPortion;
 import org.ll.heart.sound.recognition.filter.BandpassFilter;
 import org.ll.heart.sound.recognition.filter.FilterService;
 import org.ll.heart.sound.recognition.segmentation.D1Segmentation;
@@ -126,7 +128,8 @@ public class PCGWrapper {
 
     //Configure services for transorm to frequency domain, filtration and segmentation
     private void configure() {
-        setFrequencyService(new FFTFrequencyDomain(getSampleRate(), getWindowSize()));
+        //setFrequencyService(new FFTFrequencyDomain(getSampleRate(), getWindowSize()));
+        setFrequencyService(new HHTFrequencyDomain());
         setFilterService(new BandpassFilter(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
         setSegmentService(new LocalMinMaxSegmentation(SignalPortion::getMagnitude, windowSize, 0.25));
         //setSegmentService(new MinMaxSegmentation(SignalPortion::getMfreq, windowSize, 0.5));
@@ -166,14 +169,14 @@ public class PCGWrapper {
             //Create signal portion
             SignalPortion portion = new SignalPortion(i, ts, data[i], Arrays.copyOfRange(data, i, i + windowSize));
             freqService.forward(portion);
-            filterService.filter(portion);
-            freqService.features(portion);
-            freqService.inverse(portion);
-            segmentService.process(portion);
+            //filterService.filter(portion);
+            //freqService.features(portion);
+            //freqService.inverse(portion);
+            //segmentService.process(portion);
             PCG.add(portion);
             //prev = portion;
         }        
-        segmentService.finish();
+        //segmentService.finish();
         
         //PCG.forEach(s -> {normalizer.calc(s);});
         //PCG.forEach(s -> {normalizer.norm(s);});
@@ -182,8 +185,14 @@ public class PCGWrapper {
     private void save(String out) throws IOException {
         try (FileWriter fileWriter = new FileWriter(out + ".csv")) {
             fileWriter.write(PCG.get(0).getCSVColumnsNames(false) + "\n");
+            int index = 0;
             for (SignalPortion signal : PCG) {
                 fileWriter.write(signal.toCSV());
+                if (signal.getFreqAdd() != null) {
+                    HHTPortion hp = (HHTPortion)signal.getFreqAdd();
+                    hp.save(out + "_" + Integer.toString(index) + ".csv");
+                    index++;
+                }
             }
         }
     }

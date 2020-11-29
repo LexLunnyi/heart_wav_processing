@@ -55,6 +55,8 @@ public class SignalPortion {
     double[] out;
     Complex[] spectrum;
     
+    Object freqAdd;
+    
     
     public SignalPortion(int id, Date ts, double src, double[] in) {
         this.id = id;
@@ -74,6 +76,7 @@ public class SignalPortion {
         thresholdHistogram = 0.0;
         
         sx = false;
+        freqAdd = null;
     }
     
     public String toCSV() {
@@ -205,5 +208,13 @@ public class SignalPortion {
             sbuf.append(SignalColumn.SX.name());
         }
         return sbuf.toString();
+    }
+
+    public Object getFreqAdd() {
+        return freqAdd;
+    }
+
+    public void setFreqAdd(Object freqAdd) {
+        this.freqAdd = freqAdd;
     }
 }
