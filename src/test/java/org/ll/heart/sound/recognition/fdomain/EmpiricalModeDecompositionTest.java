@@ -1,5 +1,6 @@
 package org.ll.heart.sound.recognition.fdomain;
 
+import java.awt.geom.Point2D;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -29,37 +30,30 @@ public class EmpiricalModeDecompositionTest {
     @Test
     public void testMinExtremums() throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
         EmpiricalModeDecomposition emd = new EmpiricalModeDecomposition(data, 10);
-        Field resMinX = EmpiricalModeDecomposition.class.getDeclaredField("minX");
-        resMinX.setAccessible(true);
-        Field resMinY = EmpiricalModeDecomposition.class.getDeclaredField("minY");
-        resMinX.setAccessible(true);
+        Field resMin = EmpiricalModeDecomposition.class.getDeclaredField("min");
+        resMin.setAccessible(true);
         
-        List<Double> minX = new ArrayList<>();
-        minX.add(7.0);
-        List<Double> minY = new ArrayList<>();
-        minY.add(-0.3);
-        assertTrue(resMinX.get(emd).equals(minX));
-        assertTrue(resMinY.get(emd).equals(minY));
+        List<Point2D.Double> min = new ArrayList<>();
+        min.add(new Point2D.Double(0, data[0]));
+        min.add(new Point2D.Double(7, -0.3));
+        min.add(new Point2D.Double(data.length-1, data[data.length-1]));
+        
+        assertTrue(resMin.get(emd).equals(min));
     }
     
      @Test
     public void testMaxExtremums() throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
         EmpiricalModeDecomposition emd = new EmpiricalModeDecomposition(data, 10);
-        Field resMaxX = EmpiricalModeDecomposition.class.getDeclaredField("maxX");
-        resMaxX.setAccessible(true);
-        Field resMaxY = EmpiricalModeDecomposition.class.getDeclaredField("maxY");
-        resMaxX.setAccessible(true);
+        Field resMax = EmpiricalModeDecomposition.class.getDeclaredField("max");
+        resMax.setAccessible(true);
         
-        List<Double> maxX = new ArrayList<>();
-        maxX.add(2.0);
-        List<Double> maxY = new ArrayList<>();
-        maxY.add(0.3);
-        assertTrue(resMaxX.get(emd).equals(maxX));
-        assertTrue(resMaxY.get(emd).equals(maxY));
+        List<Point2D.Double> max = new ArrayList<>();
+        max.add(new Point2D.Double(0, data[0]));
+        max.add(new Point2D.Double(2, 0.3));
+        max.add(new Point2D.Double(data.length-1, data[data.length-1]));
+        
+        assertTrue(resMax.get(emd).equals(max));
     }
-    
-    
-    
 
     /**
      * Test of hasIMF method, of class EmpiricalModeDecomposition.
@@ -67,8 +61,7 @@ public class EmpiricalModeDecompositionTest {
     @Test
     public void testHasIMF() {
         EmpiricalModeDecomposition emd = new EmpiricalModeDecomposition(data, 10);
-        //There are only two knots (1 min and 1 max) but we need at least 6.
-        assertFalse(emd.hasIMF());
+        assertTrue(emd.hasIMF());
     }
 
     /**

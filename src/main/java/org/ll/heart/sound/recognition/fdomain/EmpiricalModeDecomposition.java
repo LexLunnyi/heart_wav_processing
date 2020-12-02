@@ -1,13 +1,6 @@
-1. Добавить к точкам для интерполяции начало и конец диапазона.
-2. Сохранить проверить что огибающая строится.
-3. Преобразование Гильберта.
-
-
-
-
-
 package org.ll.heart.sound.recognition.fdomain;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
@@ -26,10 +19,8 @@ public class EmpiricalModeDecomposition {
     double[] sifted = null;
     
     //knots for cubic splines
-    List<Double> minX = new ArrayList<>();
-    List<Double> minY = new ArrayList<>();
-    List<Double> maxX = new ArrayList<>();
-    List<Double> maxY = new ArrayList<>();
+    List<Point2D.Double> min = new ArrayList<>();
+    List<Point2D.Double> max = new ArrayList<>();
     
     public EmpiricalModeDecomposition(double[] src, int threshold) {
         this.src = src;
@@ -43,18 +34,18 @@ public class EmpiricalModeDecomposition {
             return false;
         }
         //Min size for knots list is 3
-        return ((minX.size() >= 3) && (maxX.size() >= 3));
+        return ((min.size() >= 3) && (max.size() >= 3));
     }
     
     public double[] getIMF(SignalPortion portion) {
         double[] data = (sifted == null) ? src : sifted;
                
-        PolynomialSplineFunction bottomSpline = spline(minX, minY);
-        PolynomialSplineFunction topSpline = spline(maxX, maxY);
+        PolynomialSplineFunction bottomSpline = spline(min);
+        PolynomialSplineFunction topSpline = spline(max);
         
         double[] mean = new double[size];
         double[] IMF = new double[size];
-        //FIXME: only for debug
+        //FIXME: only for report.
         double[] top = new double[size];
         double[] bottom = new double[size];
         
@@ -66,10 +57,10 @@ public class EmpiricalModeDecomposition {
         }
         sifted = mean;
         
-        //debug
-        if (0 == IMFindex) {
-            portion.setFreqAdd(new HHTPortion(data, top, bottom));
-        }
+        //FIXME it is currently needed for the figure of the envelops in the report
+        //if (0 == IMFindex) {
+        //    portion.setFreqAdd(new HHTPortion(data, top, bottom));
+        //}
         
         IMFindex++;
         
@@ -94,18 +85,16 @@ public class EmpiricalModeDecomposition {
             prev = cur;
         }
         throw new IllegalStateException("There is no trend in the window");
-    }    
-    
+    }
+
     
     private void extremums(double[] data) throws IllegalStateException {
-        minX.clear();
-        minY.clear();
-        maxX.clear();
-        maxY.clear();
-        
+        min.clear();
+        max.clear();
         double prev = data[0];
+        min.add(new Point2D.Double(0.0, prev));
+        max.add(new Point2D.Double(0.0, prev));
         boolean lastMin = trendIsUp(data);
-        
         for (int i = 1; i < size; i++) {
             double cur = data[i];
             
@@ -113,33 +102,33 @@ public class EmpiricalModeDecomposition {
                 //If before was local max then prev is local min
                 if (!lastMin) {
                     //Add new min
-                    minX.add((double)(i-1));
-                    minY.add(prev);
+                    min.add(new Point2D.Double(i-1, prev));
                     lastMin = true;
                 }
             } else if (cur < prev) {
                 //If before was local min then prev is local max
                 if (lastMin) {
                     //Add new min
-                    maxX.add((double)(i-1));
-                    maxY.add(prev);
+                    max.add(new Point2D.Double(i-1, prev));
                     lastMin = false;
                 }
             }
             
             prev = cur;
         }
+        min.add(new Point2D.Double(size-1, data[size-1]));
+        max.add(new Point2D.Double(size-1, data[size-1]));
     }
     
     
-    private PolynomialSplineFunction spline(List<Double> x, List<Double> y) {
+    private PolynomialSplineFunction spline(List<Point2D.Double> points) {
         //Convert mins and max to knots
-        int len = x.size();
+        int len = points.size();
         double[] xIn = new double[len];
         double[] yIn = new double[len];
         for(int i = 0; i < len; i++) {
-            xIn[i] = x.get(i);
-            yIn[i] = y.get(i);
+            xIn[i] = points.get(i).getX();
+            yIn[i] = points.get(i).getY();
         }
         //Get spline function
         SplineInterpolator si = new SplineInterpolator();
