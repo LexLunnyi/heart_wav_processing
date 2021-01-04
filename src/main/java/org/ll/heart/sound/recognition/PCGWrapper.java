@@ -1,5 +1,6 @@
 package org.ll.heart.sound.recognition;
 
+import org.ll.heart.sound.recognition.utils.WindowParams;
 import org.ll.heart.sound.recognition.utils.Normalizer;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -170,7 +171,7 @@ public class PCGWrapper {
             SignalPortion portion = new SignalPortion(i, ts, data[i], Arrays.copyOfRange(data, i, i + windowSize));
             freqService.forward(portion);
             //filterService.filter(portion);
-            //freqService.features(portion);
+            freqService.features(portion);
             //freqService.inverse(portion);
             //segmentService.process(portion);
             PCG.add(portion);
@@ -181,6 +182,12 @@ public class PCGWrapper {
         //PCG.forEach(s -> {normalizer.calc(s);});
         //PCG.forEach(s -> {normalizer.norm(s);});
     }
+    
+    private boolean checkIndex(int index) {
+        return ((index == 0) || (index == 200) || (index == 450) || 
+                (index == 700) || (index == 2400) || (index == 7150) || 
+                (index == 15800));
+    }
 
     private void save(String out) throws IOException {
         try (FileWriter fileWriter = new FileWriter(out + ".csv")) {
@@ -190,7 +197,7 @@ public class PCGWrapper {
                 fileWriter.write(signal.toCSV());
                 if (signal.getFreqAdd() != null) {
                     HHTPortion hp = (HHTPortion)signal.getFreqAdd();
-                    hp.save(out + "_" + Integer.toString(index) + ".csv");
+                    if (checkIndex(index)) hp.save(out + "_" + Integer.toString(index) + ".csv");
                     index++;
                 }
             }

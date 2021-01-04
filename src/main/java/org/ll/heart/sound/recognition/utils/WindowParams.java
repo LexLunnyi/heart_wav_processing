@@ -1,4 +1,4 @@
-package org.ll.heart.sound.recognition;
+package org.ll.heart.sound.recognition.utils;
 
 /**
  *

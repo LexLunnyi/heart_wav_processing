@@ -1,4 +1,4 @@
-package org.ll.heart.sound.recognition.fdomain;
+package org.ll.heart.sound.recognition.utils;
 
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.transform.DftNormalization;

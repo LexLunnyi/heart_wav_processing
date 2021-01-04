@@ -1,4 +1,4 @@
-package org.ll.heart.sound.recognition.fdomain;
+package org.ll.heart.sound.recognition.utils;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -64,7 +64,7 @@ public class EmpiricalModeDecomposition {
         
         IMFindex++;
         
-        extremums(src);
+        extremums(sifted);
         return IMF;
     }
     

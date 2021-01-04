@@ -15,7 +15,7 @@ import org.ll.heart.sound.recognition.HeartSoundPortion;
 import org.ll.heart.sound.recognition.utils.NormalizedHistogram;
 import org.ll.heart.sound.recognition.Options;
 import org.ll.heart.sound.recognition.SxNode;
-import org.ll.heart.sound.recognition.WindowParams;
+import org.ll.heart.sound.recognition.utils.WindowParams;
 import org.ll.heart.sound.recognition.windowing.WindowingAdaptor;
 import org.ll.heart.sound.recognition.windowing.WindowingType;
 
