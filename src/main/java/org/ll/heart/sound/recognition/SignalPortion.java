@@ -54,6 +54,7 @@ public class SignalPortion {
     double[] in;
     double[] out;
     Complex[] spectrum;
+    double[] coeffs;
     
     Object freqAdd;
     
@@ -111,6 +112,22 @@ public class SignalPortion {
         this.spectrum = spectrum;
     }
 
+    public double[] getCoeffs() {
+        return coeffs;
+    }
+
+    public void setCoeffs(double[] coeffs) {
+        this.coeffs = coeffs;
+    }
+
+    public double[] getOut() {
+        return out;
+    }
+
+    public void setOut(double[] out) {
+        this.out = out;
+    }
+    
     public void setFiltered(double filtered) {
         this.filtered = filtered;
     }

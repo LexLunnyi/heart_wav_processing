@@ -16,7 +16,9 @@ import org.ll.heart.sound.recognition.fdomain.FFTFrequencyDomain;
 import org.ll.heart.sound.recognition.fdomain.FrequencyDomainService;
 import org.ll.heart.sound.recognition.fdomain.HHTFrequencyDomain;
 import org.ll.heart.sound.recognition.fdomain.HHTPortion;
+import org.ll.heart.sound.recognition.fdomain.WaveletFrequencyDomain;
 import org.ll.heart.sound.recognition.filter.BandpassFilter;
+import org.ll.heart.sound.recognition.filter.BlankFilter;
 import org.ll.heart.sound.recognition.filter.FilterService;
 import org.ll.heart.sound.recognition.segmentation.D1Segmentation;
 import org.ll.heart.sound.recognition.segmentation.D2Segmentation;
@@ -130,15 +132,15 @@ public class PCGWrapper {
     //Configure services for transorm to frequency domain, filtration and segmentation
     private void configure() {
         //setFrequencyService(new FFTFrequencyDomain(getSampleRate(), getWindowSize()));
-        setFrequencyService(new HHTFrequencyDomain());
-        setFilterService(new BandpassFilter(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
-        setSegmentService(new LocalMinMaxSegmentation(SignalPortion::getMagnitude, windowSize, 0.25));
+        //setFrequencyService(new HHTFrequencyDomain());
+        setFrequencyService(new WaveletFrequencyDomain(getSampleRate(), getWindowSize()));
+        //setFilterService(new BandpassFilter(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
+        setFilterService(new BlankFilter());
+        //setSegmentService(new LocalMinMaxSegmentation(SignalPortion::getMagnitude, windowSize, 0.25));
         //setSegmentService(new MinMaxSegmentation(SignalPortion::getMfreq, windowSize, 0.5));
         //setSegmentService(new HistogramSegmentation(windowSize, 0.75));
-        //setSegmentService(new D1Segmentation(SignalPortion::getMagnitude, windowSize));
+        setSegmentService(new D1Segmentation(SignalPortion::getMfreq, windowSize));
         //setSegmentService(new D2Segmentation(windowSize*16));
-        
-        
     }
 
     private void setFrequencyService(FrequencyDomainService fservie) {
@@ -173,7 +175,7 @@ public class PCGWrapper {
             //filterService.filter(portion);
             freqService.features(portion);
             //freqService.inverse(portion);
-            //segmentService.process(portion);
+            segmentService.process(portion);
             PCG.add(portion);
             //prev = portion;
         }        
@@ -195,11 +197,11 @@ public class PCGWrapper {
             int index = 0;
             for (SignalPortion signal : PCG) {
                 fileWriter.write(signal.toCSV());
-                if (signal.getFreqAdd() != null) {
-                    HHTPortion hp = (HHTPortion)signal.getFreqAdd();
-                    if (checkIndex(index)) hp.save(out + "_" + Integer.toString(index) + ".csv");
-                    index++;
-                }
+//                if (signal.getFreqAdd() != null) {
+//                    HHTPortion hp = (HHTPortion)signal.getFreqAdd();
+//                    if (checkIndex(index)) hp.save(out + "_" + Integer.toString(index) + ".csv");
+//                    index++;
+//                }
             }
         }
     }
