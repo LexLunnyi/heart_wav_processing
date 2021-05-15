@@ -167,6 +167,19 @@ public class SignalPortion {
     public void setSx(boolean sx) {
         this.sx = sx;
     }
+    
+    public void sexSxStub(boolean sx) {
+    }
+    
+    public void setSxOrNew(boolean sx) {
+        boolean oldValue = isSx();
+        setSx(oldValue | sx);
+    }
+    
+    public void setSxAndNew(boolean sx) {
+        boolean oldValue = isSx();
+        setSx(oldValue & sx);
+    }
 
     public double getStatMagnitudeMean() {
         return statMagnitudeMean;

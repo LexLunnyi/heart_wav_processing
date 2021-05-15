@@ -53,4 +53,6 @@ CTestTestfile.cmake
 #
 # # End of https://www.gitignore.io/api/cmake
 /target/
-/wavs/
+/wavsi/
+.idea/
+*.iml

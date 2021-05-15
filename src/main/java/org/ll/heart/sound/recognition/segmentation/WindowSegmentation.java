@@ -4,9 +4,12 @@ import java.util.Iterator;
 import java.util.Queue;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.ll.heart.sound.recognition.SignalPortion;
+import org.ll.heart.sound.recognition.utils.SetValueToPortion;
 
 /**
- *
+ * Abstract class for the window segmentation process. Before segmentation of 
+ * any sample class collects the window of samples. Segmentation process uses 
+ * all values in the window
  * @author aberdnikov
  */
 public abstract class WindowSegmentation implements SegmentationService {
@@ -14,8 +17,16 @@ public abstract class WindowSegmentation implements SegmentationService {
     final private Iterator<SignalPortion> iter;
     final private int windowSize;
     private boolean started = false;
+    SetValueToPortion setter;
     
-    public WindowSegmentation(int windowSize) throws IllegalArgumentException {
+    /**
+     * Constructs the window for a class that implements this abstract class
+     * and performs segmentation
+     * @param setter
+     * @param windowSize is size of the window
+     * @throws IllegalArgumentException in case when window size is odd
+     */
+    public WindowSegmentation(SetValueToPortion setter, int windowSize) throws IllegalArgumentException {
         window = new CircularFifoQueue<>(windowSize+1);
         iter = window.iterator();
         this.windowSize = windowSize;
@@ -49,6 +60,10 @@ public abstract class WindowSegmentation implements SegmentationService {
         }
     }
     
+    /**
+     * Segments samples that left in the window when end of record was reached
+     * @throws IllegalStateException 
+     */
     private void markBulk() throws IllegalStateException {
         int cnt = 1;
         while ((iter.hasNext()) && (cnt < windowSize / 2)) {
@@ -65,9 +80,28 @@ public abstract class WindowSegmentation implements SegmentationService {
         markBulk();
     }
     
-    protected abstract void markProcess(SignalPortion portion) throws IllegalStateException;
+    private void mark(SignalPortion portion) {
+        boolean newVal = markProcess(portion);
+        setter.set(portion, newVal);
+    }
+    
+    /**
+     * Marks sample as belonged to heart tones or not
+     * @param portion sample that must be marked
+     * @return <code>true</code> if sample belongs to heart tones
+     * @throws IllegalStateException
+     */
+    protected abstract boolean markProcess(SignalPortion portion) throws IllegalStateException;
 
+    /**
+     * Called when a new sample is adding to the window
+     * @param portion is sample data
+     */
     protected abstract void addProcess(SignalPortion portion);
     
+    /**
+     * Called when an old sample is removing from the window
+     * @param portion is sample data
+     */
     protected abstract void removeProcess(SignalPortion portion);
 }

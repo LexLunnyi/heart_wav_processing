@@ -7,7 +7,8 @@ import org.apache.commons.math3.transform.TransformType;
 import org.ll.heart.sound.recognition.SignalPortion;
 
 /**
- *
+ * Implementation of Fast Fourier Transform
+ * 
  * @author aberdnikov
  */
 public class FFTFrequencyDomain implements FrequencyDomainService {
@@ -42,14 +43,18 @@ public class FFTFrequencyDomain implements FrequencyDomainService {
         int size = sCur.length;
         
         Complex m = new Complex(0);
-        double Mfreq = 0.0;
+        double sumMfreq = 0.0;
+        double sumMags = 0.0;
 
         for (int i = 1; i < size/2; i++) {
+            double hFreq = i * freqStep;
             m = m.add(sCur[i]);
-            Mfreq += (i + 1) * freqStep * sCur[i].abs();
+            sumMags += sCur[i].abs();
+            sumMfreq += hFreq * sCur[i].abs();
         }
+        
         portion.setMagnitude(m.abs());
-        portion.setMfreq(Mfreq);
+        portion.setMfreq(sumMfreq / sumMags);
     }
     
     @Override

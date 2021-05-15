@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import org.ll.heart.sound.recognition.fdomain.FTransormType;
 
 /**
  *
@@ -27,6 +28,7 @@ public class Options {
     boolean appSpectrogramSave;
     int appPcgHigh;
     boolean appPcgNarrow;
+    FTransormType appSpectrumWay;
     List<HeartSoundCategory> categories = new ArrayList();
     
     public Options(String path) {
@@ -40,6 +42,7 @@ public class Options {
             appSpectrogramSave = Boolean.parseBoolean(prop.getProperty("app.spectrogram.save"));
             appPcgNarrow = Boolean.parseBoolean(prop.getProperty("app.pcg.narrow"));
             appPcgHigh = Integer.parseInt(prop.getProperty("app.pcg.high"));
+            appSpectrumWay = FTransormType.valueOf(prop.getProperty("app.spectrum.way"));
             
             windowSize = Integer.parseInt(prop.getProperty("window.size"));
             windowStep = Integer.parseInt(prop.getProperty("window.step"));

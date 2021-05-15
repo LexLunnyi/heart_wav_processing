@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.imageio.ImageIO;
 import org.apache.commons.math3.complex.Complex;
 import org.ll.heart.sound.recognition.fdomain.FFTFrequencyDomain;
@@ -35,6 +37,7 @@ import org.ll.heart.sound.recognition.wav.WavFileException;
  * @author aberdnikov
  */
 public class PCGWrapper {
+    final static String KEY_NEED_NORMALIZATION = "KEY_NEED_NORMALIZATION";
 
     final Options options;
     final WavFile wavFile;
@@ -91,6 +94,9 @@ public class PCGWrapper {
         readFile();
         // Close the wavFile
         wavFile.close();
+        //Update borders
+        PCG_LIMIT_BEGIN = (null == PCG_LIMIT_BEGIN) ? 0 : PCG_LIMIT_BEGIN;
+        PCG_LIMIT_END = (null == PCG_LIMIT_END) ? data.length - windowSize : PCG_LIMIT_END - windowSize;
     }
 
     private void readFile() throws IOException, WavFileException {
@@ -120,8 +126,17 @@ public class PCGWrapper {
     }
 
     public void process(String out) throws IOException {
-        configure();
-        process();
+        Set<String> params = new HashSet<>();
+        
+        configure(params);
+        getSignalPortions(!params.contains(KEY_NEED_NORMALIZATION));
+        
+        if (params.contains(KEY_NEED_NORMALIZATION)) {
+            PCG.forEach(sp -> {
+                segmentService.process(sp);
+            });
+        }
+        
         if (options.isAppSpectrogramSave()) {
             saveWithSpectrogram(out);
         } else {
@@ -130,16 +145,28 @@ public class PCGWrapper {
     }
 
     //Configure services for transorm to frequency domain, filtration and segmentation
-    private void configure() {
-        //setFrequencyService(new FFTFrequencyDomain(getSampleRate(), getWindowSize()));
-        //setFrequencyService(new HHTFrequencyDomain());
-        setFrequencyService(new WaveletFrequencyDomain(getSampleRate(), getWindowSize()));
+    private void configure(Set<String> params) throws IllegalStateException {
+        switch (options.appSpectrumWay) {
+            case FFT:
+                setFrequencyService(new FFTFrequencyDomain(getSampleRate(), getWindowSize()));
+                break;
+            case DWT:
+                setFrequencyService(new WaveletFrequencyDomain(getSampleRate(), getWindowSize()));
+                break;
+            case HHT:
+                setFrequencyService(new HHTFrequencyDomain());
+                break;
+            default:
+                throw new IllegalStateException("The getting spectrum way didn't set");
+        }
+        
         //setFilterService(new BandpassFilter(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
         setFilterService(new BlankFilter());
+        
         //setSegmentService(new LocalMinMaxSegmentation(SignalPortion::getMagnitude, windowSize, 0.25));
-        //setSegmentService(new MinMaxSegmentation(SignalPortion::getMfreq, windowSize, 0.5));
+        setSegmentService(new MinMaxSegmentation(SignalPortion::getMfreq, SignalPortion::setSx, windowSize, 0.5));
         //setSegmentService(new HistogramSegmentation(windowSize, 0.75));
-        setSegmentService(new D1Segmentation(SignalPortion::getMfreq, windowSize));
+        //setSegmentService(new D1Segmentation(SignalPortion::getMfreq, windowSize));
         //setSegmentService(new D2Segmentation(windowSize*16));
     }
 
@@ -156,17 +183,15 @@ public class PCGWrapper {
     }
 
     //main action
-    private void process() throws IOException {
+    private void getSignalPortions(boolean withSegmentation) throws IOException {
         PCG.clear();
 
-        int start = (null == PCG_LIMIT_BEGIN) ? 0 : PCG_LIMIT_BEGIN;
-        int end = (null == PCG_LIMIT_END) ? data.length - windowSize : PCG_LIMIT_END - windowSize;
-        if (end <= start) {
+        if (PCG_LIMIT_END <= PCG_LIMIT_BEGIN) {
             throw new IOException("The start point or end point is incorrect");
         }
         
         //SignalPortion prev = null;
-        for (int i = start; i < end; i++) {
+        for (int i = PCG_LIMIT_BEGIN; i < PCG_LIMIT_END; i++) {
             //Calc time
             Date ts = new Date((long) ((i * 1000) / getSampleRate()));
             //Create signal portion
@@ -174,8 +199,11 @@ public class PCGWrapper {
             freqService.forward(portion);
             //filterService.filter(portion);
             freqService.features(portion);
-            //freqService.inverse(portion);
-            segmentService.process(portion);
+            
+            if (withSegmentation) {
+                segmentService.process(portion);
+            }
+            normalizer.norm(portion);
             PCG.add(portion);
             //prev = portion;
         }        

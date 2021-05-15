@@ -2,6 +2,7 @@ package org.ll.heart.sound.recognition.segmentation;
 
 import org.ll.heart.sound.recognition.SignalPortion;
 import org.ll.heart.sound.recognition.utils.GetValueFromPortion;
+import org.ll.heart.sound.recognition.utils.SetValueToPortion;
 
 /**
  *
@@ -14,16 +15,16 @@ public class MinMaxSegmentation extends WindowSegmentation {
     
     final GetValueFromPortion getter;
 
-    public MinMaxSegmentation(GetValueFromPortion getter, int windowSize, double threshold) throws IllegalArgumentException {
-        super(windowSize);
+    public MinMaxSegmentation(GetValueFromPortion getter, SetValueToPortion setter, int windowSize, double threshold) throws IllegalArgumentException {
+        super(setter, windowSize);
         this.threshold = threshold;
         this.getter = getter;
     }
 
     @Override
-    protected void markProcess(SignalPortion portion) {
+    protected boolean markProcess(SignalPortion portion) {
         double tVal = (max - min) * threshold + min;
-        portion.setSx(getter.get(portion) >= tVal);
+        return getter.get(portion) >= tVal;
     }
 
     @Override
