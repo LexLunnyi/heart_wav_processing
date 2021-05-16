@@ -1,7 +1,7 @@
 package org.ll.heart.sound.recognition;
 
 import org.ll.heart.sound.recognition.utils.WindowParams;
-import org.ll.heart.sound.recognition.utils.Normalizer;
+import org.ll.heart.sound.recognition.utils.RecordStatistic;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
@@ -17,17 +17,11 @@ import org.apache.commons.math3.complex.Complex;
 import org.ll.heart.sound.recognition.fdomain.FFTFrequencyDomain;
 import org.ll.heart.sound.recognition.fdomain.FrequencyDomainService;
 import org.ll.heart.sound.recognition.fdomain.HHTFrequencyDomain;
-import org.ll.heart.sound.recognition.fdomain.HHTPortion;
 import org.ll.heart.sound.recognition.fdomain.WaveletFrequencyDomain;
-import org.ll.heart.sound.recognition.filter.BandpassFilter;
 import org.ll.heart.sound.recognition.filter.BlankFilter;
 import org.ll.heart.sound.recognition.filter.FilterService;
-import org.ll.heart.sound.recognition.segmentation.D1Segmentation;
-import org.ll.heart.sound.recognition.segmentation.D2Segmentation;
-import org.ll.heart.sound.recognition.segmentation.HistogramSegmentation;
-import org.ll.heart.sound.recognition.segmentation.LocalMinMaxSegmentation;
-import org.ll.heart.sound.recognition.segmentation.MinMaxSegmentation;
 import org.ll.heart.sound.recognition.segmentation.SegmentationService;
+import org.ll.heart.sound.recognition.segmentation.SegmentationServiceFactory;
 import org.ll.heart.sound.recognition.spectrogram.PixelARGB;
 import org.ll.heart.sound.recognition.wav.WavFile;
 import org.ll.heart.sound.recognition.wav.WavFileException;
@@ -54,9 +48,8 @@ public class PCGWrapper {
 
     FrequencyDomainService freqService;
     FilterService filterService;
-    SegmentationService segmentService;
-    
-    final Normalizer normalizer = new Normalizer();
+    SegmentationService segmentationService;
+    final RecordStatistic globalStat = new RecordStatistic();
 
     public PCGWrapper(File in, Options options) throws IOException, WavFileException {
         this.options = options;
@@ -133,8 +126,9 @@ public class PCGWrapper {
         
         if (params.contains(KEY_NEED_NORMALIZATION)) {
             PCG.forEach(sp -> {
-                segmentService.process(sp);
+                segmentationService.process(sp);
             });
+            segmentationService.finish();
         }
         
         if (options.isAppSpectrogramSave()) {
@@ -146,7 +140,8 @@ public class PCGWrapper {
 
     //Configure services for transorm to frequency domain, filtration and segmentation
     private void configure(Set<String> params) throws IllegalStateException {
-        switch (options.appSpectrumWay) {
+        //Configure getting spectrum way
+        switch (options.getAppSpectrumWay()) {
             case FFT:
                 setFrequencyService(new FFTFrequencyDomain(getSampleRate(), getWindowSize()));
                 break;
@@ -159,15 +154,25 @@ public class PCGWrapper {
             default:
                 throw new IllegalStateException("The getting spectrum way didn't set");
         }
-        
+        //Configure segmentation way
+        SegmentationServiceFactory factory = new SegmentationServiceFactory(globalStat, windowSize, options.getAppSegmentationThreshold());
+        switch (options.getAppSegmentationType()) {
+            case MINMAX:
+                setSegmentService(factory.createMinMax(options.getAppSegmentationLogicType()));
+                params.add(KEY_NEED_NORMALIZATION);
+                break;
+            case MEAN:
+                setSegmentService(factory.createMean(options.getAppSegmentationLogicType()));
+                params.add(KEY_NEED_NORMALIZATION);
+                break;
+            case HISTOGRAM:
+                setSegmentService(factory.createHistogram(options.getAppSegmentationLogicType()));
+                break;
+            default:
+                throw new IllegalStateException("The segmentation way didn't set");
+        }
         //setFilterService(new BandpassFilter(getSampleRate()/getWindowSize(), options.getBandpassLow(), options.getBandpassHight()));
         setFilterService(new BlankFilter());
-        
-        //setSegmentService(new LocalMinMaxSegmentation(SignalPortion::getMagnitude, windowSize, 0.25));
-        setSegmentService(new MinMaxSegmentation(SignalPortion::getMfreq, SignalPortion::setSx, windowSize, 0.5));
-        //setSegmentService(new HistogramSegmentation(windowSize, 0.75));
-        //setSegmentService(new D1Segmentation(SignalPortion::getMfreq, windowSize));
-        //setSegmentService(new D2Segmentation(windowSize*16));
     }
 
     private void setFrequencyService(FrequencyDomainService fservie) {
@@ -179,17 +184,15 @@ public class PCGWrapper {
     }
 
     public void setSegmentService(SegmentationService segmentService) {
-        this.segmentService = segmentService;
+        this.segmentationService = segmentService;
     }
 
     //main action
     private void getSignalPortions(boolean withSegmentation) throws IOException {
         PCG.clear();
-
         if (PCG_LIMIT_END <= PCG_LIMIT_BEGIN) {
             throw new IOException("The start point or end point is incorrect");
         }
-        
         //SignalPortion prev = null;
         for (int i = PCG_LIMIT_BEGIN; i < PCG_LIMIT_END; i++) {
             //Calc time
@@ -201,16 +204,15 @@ public class PCGWrapper {
             freqService.features(portion);
             
             if (withSegmentation) {
-                segmentService.process(portion);
+                segmentationService.process(portion);
             }
-            normalizer.norm(portion);
+            globalStat.add(portion);
             PCG.add(portion);
             //prev = portion;
-        }        
-        //segmentService.finish();
-        
-        //PCG.forEach(s -> {normalizer.calc(s);});
-        //PCG.forEach(s -> {normalizer.norm(s);});
+        }    
+        if (withSegmentation) {
+            segmentationService.finish();
+        }
     }
     
     private boolean checkIndex(int index) {

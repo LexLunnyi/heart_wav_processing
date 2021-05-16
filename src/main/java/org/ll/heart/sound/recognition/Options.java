@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import org.ll.heart.sound.recognition.fdomain.FTransormType;
+import org.ll.heart.sound.recognition.segmentation.SegmentationLogicType;
+import org.ll.heart.sound.recognition.segmentation.SegmentationType;
 
 /**
  *
@@ -29,6 +31,9 @@ public class Options {
     int appPcgHigh;
     boolean appPcgNarrow;
     FTransormType appSpectrumWay;
+    SegmentationType appSegmentationType;
+    SegmentationLogicType appSegmentationLogicType;
+    double appSegmentationThreshold;
     List<HeartSoundCategory> categories = new ArrayList();
     
     public Options(String path) {
@@ -42,7 +47,10 @@ public class Options {
             appSpectrogramSave = Boolean.parseBoolean(prop.getProperty("app.spectrogram.save"));
             appPcgNarrow = Boolean.parseBoolean(prop.getProperty("app.pcg.narrow"));
             appPcgHigh = Integer.parseInt(prop.getProperty("app.pcg.high"));
-            appSpectrumWay = FTransormType.valueOf(prop.getProperty("app.spectrum.way"));
+            appSpectrumWay = FTransormType.valueOf(prop.getProperty("app.spectrum.way", FTransormType.NONE.name()));
+            appSegmentationType = SegmentationType.valueOf(prop.getProperty("app.segmentation.type", SegmentationType.NONE.name()));
+            appSegmentationLogicType = SegmentationLogicType.valueOf(prop.getProperty("app.segmentation.logic.type", SegmentationLogicType.NONE.name()));
+            appSegmentationThreshold = Double.parseDouble(prop.getProperty("app.segmentation.threshold", "0"));
             
             windowSize = Integer.parseInt(prop.getProperty("window.size"));
             windowStep = Integer.parseInt(prop.getProperty("window.step"));
@@ -90,6 +98,10 @@ public class Options {
         System.out.println("  appSpectrogramSave -> " + Boolean.toString(appSpectrogramSave));
         System.out.println("  appPcgNarrow -> " + Boolean.toString(appPcgNarrow));
         System.out.println("  appPcgHigh -> " + Integer.toString(appPcgHigh));
+        System.out.println("  appSpectrumWay -> " + appSpectrumWay.name());
+        System.out.println("  appSegmentationType -> " + appSegmentationType.name());
+        System.out.println("  appSegmentationLogicType -> " + appSegmentationLogicType.name());
+        System.out.println("  appSegmentationThreshold -> " + Double.toString(appSegmentationThreshold));
         System.out.println("  ");
         System.out.println("  windowSize -> " + Integer.toString(windowSize));
         System.out.println("  windowStep -> " + Integer.toString(windowStep));
@@ -175,5 +187,37 @@ public class Options {
 
     public boolean isAppPcgNarrow() {
         return appPcgNarrow;
+    }
+
+    public FTransormType getAppSpectrumWay() {
+        return appSpectrumWay;
+    }
+
+    public void setAppSpectrumWay(FTransormType appSpectrumWay) {
+        this.appSpectrumWay = appSpectrumWay;
+    }
+
+    public SegmentationType getAppSegmentationType() {
+        return appSegmentationType;
+    }
+
+    public void setAppSegmentationType(SegmentationType appSegmentationType) {
+        this.appSegmentationType = appSegmentationType;
+    }
+
+    public SegmentationLogicType getAppSegmentationLogicType() {
+        return appSegmentationLogicType;
+    }
+
+    public void setAppSegmentationLogicType(SegmentationLogicType appSegmentationLogicType) {
+        this.appSegmentationLogicType = appSegmentationLogicType;
+    }
+
+    public double getAppSegmentationThreshold() {
+        return appSegmentationThreshold;
+    }
+
+    public void setAppSegmentationThreshold(double appSegmentationThreshold) {
+        this.appSegmentationThreshold = appSegmentationThreshold;
     }
 }

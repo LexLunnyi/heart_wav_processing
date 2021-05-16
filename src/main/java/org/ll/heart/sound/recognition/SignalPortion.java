@@ -168,7 +168,7 @@ public class SignalPortion {
         this.sx = sx;
     }
     
-    public void sexSxStub(boolean sx) {
+    public void setSxStub(boolean sx) {
     }
     
     public void setSxOrNew(boolean sx) {

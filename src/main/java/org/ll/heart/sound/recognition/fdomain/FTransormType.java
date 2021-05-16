@@ -10,5 +10,5 @@ package org.ll.heart.sound.recognition.fdomain;
  * @author aberdnikov
  */
 public enum FTransormType {
-    FFT, DWT, HHT
+    NONE, FFT, DWT, HHT
 }

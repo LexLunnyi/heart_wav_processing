@@ -6,19 +6,15 @@ import org.ll.heart.sound.recognition.utils.RecordStatistic;
 import org.ll.heart.sound.recognition.utils.SetValueToPortion;
 
 /**
- *
  * @author aberdnikov
  */
-public class MinMaxSegmentation extends StatisticSegmentation {
-    public MinMaxSegmentation(GetValueFromPortion gvfp, SetValueToPortion svtp, RecordStatistic rs, int i) throws IllegalArgumentException {
+public class MeanSegmentation extends StatisticSegmentation {
+    public MeanSegmentation(GetValueFromPortion gvfp, SetValueToPortion svtp, RecordStatistic rs, int i) throws IllegalArgumentException {
         super(gvfp, svtp, rs, i);
     }
     
     @Override
     protected boolean markProcess(SignalPortion portion) {
-        double diffLocal = localStat.getMax() - localStat.getMin();
-        double diffGlobal = getter.get(globalStat.getMax()) - getter.get(globalStat.getMin()); 
-        double val = diffLocal / diffGlobal;
-        return val > threshold;
+        return localStat.getMean() > getter.get(globalStat.getMean());
     }
 }

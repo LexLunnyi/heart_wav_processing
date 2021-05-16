@@ -10,6 +10,12 @@ import org.ll.heart.sound.recognition.SignalPortion;
  */
 public interface SegmentationService {
     /**
+     * Sets a new threshold value instead of default
+     * @param threshold is new value
+     */
+    void setThreshold(double threshold);
+    
+    /**
      * Performs segmentation for passed sample
      * @param portion sample of the record that must be segmented
      */

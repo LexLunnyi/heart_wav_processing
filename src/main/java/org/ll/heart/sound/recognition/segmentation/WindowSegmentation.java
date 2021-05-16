@@ -13,11 +13,13 @@ import org.ll.heart.sound.recognition.utils.SetValueToPortion;
  * @author aberdnikov
  */
 public abstract class WindowSegmentation implements SegmentationService {
+    final static double DEF_THRESHOLD = 0.5;
     final private Queue<SignalPortion> window;
     final private Iterator<SignalPortion> iter;
-    final private int windowSize;
+    final protected int windowSize;
     private boolean started = false;
     SetValueToPortion setter;
+    double threshold;
     
     /**
      * Constructs the window for a class that implements this abstract class
@@ -29,11 +31,17 @@ public abstract class WindowSegmentation implements SegmentationService {
     public WindowSegmentation(SetValueToPortion setter, int windowSize) throws IllegalArgumentException {
         window = new CircularFifoQueue<>(windowSize+1);
         iter = window.iterator();
+        this.setter = setter;
         this.windowSize = windowSize;
         int half = windowSize / 2;
         if (windowSize != half*2) {
             throw new IllegalArgumentException("The window size must be even, the wrong value: " + windowSize);
         }
+    }
+
+    @Override
+    public void setThreshold(double threshold) {
+        this.threshold = threshold;
     }
 
     @Override
@@ -53,7 +61,7 @@ public abstract class WindowSegmentation implements SegmentationService {
         //Mark the right middle signal portion
         if (started) {
             if (iter.hasNext()) {
-                markProcess(iter.next());
+                mark(iter.next());
             } else {
                 throw new IllegalStateException("Window doesn't have signal portion for mark");
             }           
@@ -67,7 +75,7 @@ public abstract class WindowSegmentation implements SegmentationService {
     private void markBulk() throws IllegalStateException {
         int cnt = 1;
         while ((iter.hasNext()) && (cnt < windowSize / 2)) {
-            markProcess(iter.next());
+            mark(iter.next());
             cnt++;
         }
         if (cnt != windowSize / 2) {

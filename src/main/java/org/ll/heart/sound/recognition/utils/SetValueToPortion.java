@@ -7,5 +7,5 @@ import org.ll.heart.sound.recognition.SignalPortion;
  * @author aberdnikov
  */
 public interface SetValueToPortion {
-    double set(SignalPortion portion, boolean value);
+    void set(SignalPortion portion, boolean value);
 }

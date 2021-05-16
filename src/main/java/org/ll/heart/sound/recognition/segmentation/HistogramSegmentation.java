@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 import org.ll.heart.sound.recognition.SignalPortion;
 import org.ll.heart.sound.recognition.utils.AdaptiveHistogram;
+import org.ll.heart.sound.recognition.utils.GetValueFromPortion;
+import org.ll.heart.sound.recognition.utils.SetValueToPortion;
 
 /**
  *
@@ -11,18 +13,16 @@ import org.ll.heart.sound.recognition.utils.AdaptiveHistogram;
  */
 public class HistogramSegmentation extends WindowSegmentation {
     AdaptiveHistogram hist = null;
-    final int windowSize;
+    final GetValueFromPortion getter;
     final List<Double> initData = new LinkedList<>();
-    final double threshold;
 
-    public HistogramSegmentation(int windowSize, double threshold) throws IllegalArgumentException {
-        super(windowSize);
-        this.windowSize = windowSize;
-        this.threshold = threshold;
+    public HistogramSegmentation(GetValueFromPortion getter, SetValueToPortion setter, int windowSize) throws IllegalArgumentException {
+        super(setter, windowSize);
+        this.getter = getter;
     }
 
     @Override
-    protected void markProcess(SignalPortion portion) throws IllegalStateException {
+    protected boolean markProcess(SignalPortion portion) throws IllegalStateException {
         if (hist == null) {
             try {
                 hist = new AdaptiveHistogram(initData, windowSize, threshold);
@@ -30,8 +30,7 @@ public class HistogramSegmentation extends WindowSegmentation {
                 throw new IllegalStateException("Error to create histogram: " + ex.getMessage());
             }
         }
-        portion.setSx(portion.getMagnitude() >= hist.getThreshold());
-        portion.setThresholdHistogram(hist.getThreshold());
+        return getter.get(portion) >= hist.getThreshold();
     }
 
     @Override
