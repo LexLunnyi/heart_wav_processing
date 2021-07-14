@@ -1,4 +1,4 @@
-# heart_wav_processing
+# heart wav processing
 ## Description
 
 This application is intended to process the heart's sounds:
